@@ -9,10 +9,11 @@ import (
 
 type Manager struct {
 	// config
-	maxTimeStep int
 	logging     bool
 	verbose     bool
 	debug       bool
+	maxTimeStep int
+	stepSize    time.Duration
 
 	// status
 	workers               map[string]*worker.BaseWorker
@@ -23,18 +24,20 @@ type Manager struct {
 }
 
 type ManagerConfig struct {
-	MaxTimeStep int                   `json:"maxTimeStep"`
 	Logging     bool                  `json:"logging"`
 	Verbose     bool                  `json:"verbose"`
 	Debug       bool                  `json:"debug"`
+	MaxTimeStep int                   `json:"maxTimeStep"`
+	StepSize    int                   `json:"stepSize"`
 	Workers     []worker.WorkerConfig `json:"workers"`
 }
 
 func (m *Manager) Init(config ManagerConfig) error {
-	m.maxTimeStep = config.MaxTimeStep
 	m.logging = config.Logging
 	m.verbose = config.Verbose
 	m.debug = config.Debug
+	m.maxTimeStep = config.MaxTimeStep
+	m.stepSize = time.Duration(config.StepSize) * time.Second
 
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
@@ -55,8 +58,12 @@ func (m *Manager) Init(config ManagerConfig) error {
 func (m *Manager) Start() error {
 	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
 
+	// TODO: Convert to go routine!
+
 	// main loop
 	for {
+		t0 := time.Now()
+
 		// Poll
 		for _, w := range m.workers {
 			_, err := w.Stats()
@@ -72,6 +79,8 @@ func (m *Manager) Start() error {
 		// update time step or stop
 		if m.currentTimeStep >= m.maxTimeStep {
 			break
+		} else if time.Since(t0) < m.stepSize {
+			// wait for timestep to finish
 		} else {
 			m.currentTimeStep += 1
 		}
