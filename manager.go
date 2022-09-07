@@ -39,12 +39,17 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.maxTimeStep = config.MaxTimeStep
 	m.stepSize = time.Duration(config.StepSize) * time.Second
 
+	m.workers = make(map[string]*worker.BaseWorker)
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
+		available := _worker.IsAvailable()
 		if err != nil {
-			m.workers[w.Name] = _worker
+			log.Println("Failed to initialize worker", w.Name)
+			log.Println(err)
+		} else if available != true {
+			log.Println("Worker unavailable, ensure worker server is running.", w.Name)
 		}
-
+		m.workers[w.Name] = _worker
 	}
 
 	m.startTime = ""
@@ -55,34 +60,43 @@ func (m *Manager) Init(config ManagerConfig) error {
 	return nil
 }
 
+func step(done chan bool, t0 time.Time, m *Manager) {
+
+	// Poll
+	// log.Println("Poll...")
+	// for _, w := range m.workers {
+	// 	_, err := w.Stats()
+	// 	if err != nil {
+	// 		log.Println("Error updating stats for %s", w.Name)
+	// 	}
+	// }
+
+	// Inference
+	// log.Println("Inference...")
+
+	// Assign Job(s)
+	// log.Println("Scheduling")
+
+	// Wait for end of time step
+	if time.Since(t0) < m.stepSize {
+		time.Sleep(m.stepSize - time.Since(t0))
+	}
+	m.currentTimeStep += 1
+	done <- true
+}
+
 func (m *Manager) Start() error {
 	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
 
-	// TODO: Convert to go routine!
-
 	// main loop
 	for {
+		done := make(chan bool, 1)
 		t0 := time.Now()
+		go step(done, t0, m)
+		<-done
 
-		// Poll
-		for _, w := range m.workers {
-			_, err := w.Stats()
-			if err != nil {
-				log.Println("Error updating stats for {}", w.Name)
-			}
-		}
-
-		// Inference
-
-		// Assign Job(s)
-
-		// update time step or stop
 		if m.currentTimeStep >= m.maxTimeStep {
 			break
-		} else if time.Since(t0) < m.stepSize {
-			// wait for timestep to finish
-		} else {
-			m.currentTimeStep += 1
 		}
 	}
 
