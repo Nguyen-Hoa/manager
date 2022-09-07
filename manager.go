@@ -74,6 +74,7 @@ func (m *Manager) Start() error {
 		}
 
 		// Inference
+		log.Println("Inference...")
 
 		// Assign Job(s)
 
@@ -81,7 +82,11 @@ func (m *Manager) Start() error {
 		if m.currentTimeStep >= m.maxTimeStep {
 			break
 		} else if time.Since(t0) < m.stepSize {
-			// wait for timestep to finish
+			for {
+				if time.Since(t0) < m.stepSize {
+					break
+				}
+			}
 		} else {
 			m.currentTimeStep += 1
 		}
