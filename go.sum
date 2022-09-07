@@ -8,6 +8,8 @@ github.com/Nguyen-Hoa/worker v1.2.3-0.20220831210612-9ad5babde4b9 h1:on0x3lAThGI
 github.com/Nguyen-Hoa/worker v1.2.3-0.20220831210612-9ad5babde4b9/go.mod h1:KbhQjRW/ZzAmW/rFxyVfkSQVzCZC2+huiJEJDZUhCJU=
 github.com/Nguyen-Hoa/worker v1.2.3-0.20220831212700-1190bfec0658 h1:QkNGdxi/vpEmdYwCKEbe2Ksni3ZWhXAKLEDSLUQrlo4=
 github.com/Nguyen-Hoa/worker v1.2.3-0.20220831212700-1190bfec0658/go.mod h1:KbhQjRW/ZzAmW/rFxyVfkSQVzCZC2+huiJEJDZUhCJU=
+github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 h1:H8A3m+1FE6OW+kIq+eyG2VK22UCTPJdEBaG4T/7X6SY=
+github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759/go.mod h1:KbhQjRW/ZzAmW/rFxyVfkSQVzCZC2+huiJEJDZUhCJU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/docker/distribution v2.8.1+incompatible h1:Q50tZOPR6T/hjNsyc9g8/syEs6bk8XXApsHjKukMl68=

@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Nguyen-Hoa/wattsup v1.2.1 // indirect
-	github.com/Nguyen-Hoa/worker v1.2.3-0.20220831212700-1190bfec0658 // indirect
+	github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect

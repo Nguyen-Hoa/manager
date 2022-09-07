@@ -41,10 +41,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
-		if err != nil {
-			m.workers[w.Name] = _worker
+		available := _worker.IsAvailable()
+		if err != nil || available != true {
+			log.Println("Failed to initialize worker", w.Name)
 		}
-
+		m.workers[w.Name] = _worker
 	}
 
 	m.startTime = ""
