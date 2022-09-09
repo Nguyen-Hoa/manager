@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -21,6 +22,12 @@ type Manager struct {
 	currentTimeStep       int
 	currentNumJobsRunning int
 	running               bool
+	JobQueue              []Job
+}
+
+type Job struct {
+	Image string   `json:"image"`
+	Cmd   []string `json:"cmd"`
 }
 
 type ManagerConfig struct {
@@ -30,6 +37,7 @@ type ManagerConfig struct {
 	MaxTimeStep int                   `json:"maxTimeStep"`
 	StepSize    int                   `json:"stepSize"`
 	Workers     []worker.WorkerConfig `json:"workers"`
+	JobQueue    []Job                 `json:"jobs"`
 }
 
 func (m *Manager) Init(config ManagerConfig) error {
@@ -60,7 +68,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	return nil
 }
 
-func step(done chan bool, t0 time.Time, m *Manager) {
+func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Poll
 	// log.Println("Poll...")
@@ -75,7 +83,25 @@ func step(done chan bool, t0 time.Time, m *Manager) {
 	// log.Println("Inference...")
 
 	// Assign Job(s)
-	// log.Println("Scheduling")
+	log.Println("Scheduling")
+
+	newJob, err := m.requestJob()
+	if err != nil {
+		log.Println(err)
+		done <- true
+		m.currentTimeStep += 1
+		return err
+	}
+
+	target, err := m.findWorker()
+	if err != nil {
+		log.Println(err)
+		done <- true
+		m.currentTimeStep += 1
+		return err
+	}
+
+	target.StartJob(newJob.Image, newJob.Cmd)
 
 	// Wait for end of time step
 	if time.Since(t0) < m.stepSize {
@@ -83,6 +109,23 @@ func step(done chan bool, t0 time.Time, m *Manager) {
 	}
 	m.currentTimeStep += 1
 	done <- true
+	return nil
+}
+
+func (m *Manager) requestJob() (Job, error) {
+	if len(m.JobQueue) <= 0 {
+		return Job{}, errors.New("No jobs remaining")
+	}
+
+	job := m.JobQueue[0]
+	m.JobQueue = m.JobQueue[1:]
+	return job, nil
+}
+
+/* Testing ONLY*/
+func (m *Manager) findWorker() (worker.BaseWorker, error) {
+	w := m.workers["kimchi"]
+	return *w, nil
 }
 
 func (m *Manager) Start() error {
