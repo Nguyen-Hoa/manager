@@ -6,6 +6,8 @@ github.com/Nguyen-Hoa/wattsup v1.2.1 h1:Wk8ejPFlmJ0g2lgX1oh5Wj0d2l5q2Zg6aND6hPyP
 github.com/Nguyen-Hoa/wattsup v1.2.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
 github.com/Nguyen-Hoa/worker v1.2.3 h1:29zg65nPCUprX7N5S+XIHvyOZ3fvzfoskG26MKyUpuY=
 github.com/Nguyen-Hoa/worker v1.2.3/go.mod h1:KbhQjRW/ZzAmW/rFxyVfkSQVzCZC2+huiJEJDZUhCJU=
+github.com/Nguyen-Hoa/worker v1.2.4-0.20220909213823-344105b28972 h1:QOBQnPDURwE5iNip4Z74MrIUdNcPYEfCA9AIH9joFzs=
+github.com/Nguyen-Hoa/worker v1.2.4-0.20220909213823-344105b28972/go.mod h1:KbhQjRW/ZzAmW/rFxyVfkSQVzCZC2+huiJEJDZUhCJU=
 github.com/creack/pty v1.1.11/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

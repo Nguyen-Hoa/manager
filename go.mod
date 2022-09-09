@@ -2,11 +2,9 @@ module github.com/Nguyen-Hoa/manager
 
 go 1.17
 
-// replace github.com/Nguyen-Hoa/wattsup v1.2.1 => /Users/hoanguyen/MoCA/repos/wattsup
-
 // replace github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 => /Users/hoanguyen/MoCA/repos/worker
 
-require github.com/Nguyen-Hoa/worker v1.2.3
+require github.com/Nguyen-Hoa/worker v1.2.4-0.20220909213823-344105b28972
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
