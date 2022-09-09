@@ -86,23 +86,19 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	// Assign Job(s)
 	log.Println("Scheduling")
 
-	newJob, err := m.requestJob()
-	if err != nil {
-		log.Println(err)
-		done <- true
-		m.currentTimeStep += 1
-		return err
+	newJob, errJob := m.requestJob()
+	if errJob != nil {
+		log.Println(errJob)
 	}
 
-	target, err := m.findWorker()
-	if err != nil {
-		log.Println(err)
-		done <- true
-		m.currentTimeStep += 1
-		return err
+	target, errWorker := m.findWorker()
+	if errWorker != nil {
+		log.Println(errWorker)
 	}
 
-	target.StartJob(newJob.Image, newJob.Cmd)
+	if errJob == nil && errWorker == nil {
+		target.StartJob(newJob.Image, newJob.Cmd)
+	}
 
 	// Wait for end of time step
 	if time.Since(t0) < m.stepSize {
