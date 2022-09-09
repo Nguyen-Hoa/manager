@@ -48,7 +48,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.stepSize = time.Duration(config.StepSize) * time.Second
 
 	m.workers = make(map[string]*worker.BaseWorker)
-	m.JobQueue = make([]Job, 1)
+	m.JobQueue = config.JobQueue
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
 		available := _worker.IsAvailable()
