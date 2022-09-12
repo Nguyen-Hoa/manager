@@ -16,6 +16,9 @@ type Manager struct {
 	maxTimeStep int
 	stepSize    time.Duration
 
+	// models
+	predictor BasePredictor
+
 	// status
 	workers               map[string]*worker.BaseWorker
 	startTime             string
@@ -36,6 +39,7 @@ type ManagerConfig struct {
 	Debug       bool                  `json:"debug"`
 	MaxTimeStep int                   `json:"maxTimeStep"`
 	StepSize    int                   `json:"stepSize"`
+	ModelPath   string                `json:"modelPath"`
 	Workers     []worker.WorkerConfig `json:"workers"`
 	JobQueue    []Job                 `json:"jobs"`
 }
@@ -46,6 +50,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.debug = config.Debug
 	m.maxTimeStep = config.MaxTimeStep
 	m.stepSize = time.Duration(config.StepSize) * time.Second
+
+	// TODO: How to create init generic predictor?
+	predictor := DNN{}
+	predictor.Init(config.ModelPath)
+	m.predictor = predictor
 
 	m.workers = make(map[string]*worker.BaseWorker)
 	m.JobQueue = config.JobQueue
