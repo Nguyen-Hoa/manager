@@ -11,7 +11,7 @@ type DNN struct {
 }
 
 func (b DNN) Init(modelPath string) error {
-	b.model = tg.LoadModel(modelPath, []string{"server"}, nil)
+	b.model = tg.LoadModel(modelPath, []string{"serve"}, nil)
 	return nil
 }
 
