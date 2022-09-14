@@ -18,7 +18,7 @@ type Manager struct {
 	stepSize    time.Duration
 
 	// models
-	predictor BasePredictor
+	predictor *DNN
 
 	// status
 	workers               map[string]*worker.BaseWorker
@@ -55,7 +55,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	// TODO: How to create init generic predictor?
 	predictor := DNN{}
 	predictor.Init(config.ModelPath)
-	m.predictor = predictor
+	m.predictor = &predictor
 
 	m.workers = make(map[string]*worker.BaseWorker)
 	m.JobQueue = config.JobQueue
@@ -139,9 +139,9 @@ func (m *Manager) requestJob() (Job, error) {
 }
 
 /* Testing ONLY*/
-func (m *Manager) findWorker() (worker.BaseWorker, error) {
-	w := m.workers["kimchi"]
-	return *w, nil
+func (m *Manager) findWorker() (*worker.BaseWorker, error) {
+	w := m.workers["kraken"]
+	return w, nil
 }
 
 func (m *Manager) Start() error {
