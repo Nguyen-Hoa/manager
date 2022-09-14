@@ -3,6 +3,7 @@ package manager
 import (
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	worker "github.com/Nguyen-Hoa/worker"
@@ -81,16 +82,25 @@ func (m *Manager) Init(config ManagerConfig) error {
 func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Poll
-	// log.Println("Poll...")
-	// for _, w := range m.workers {
-	// 	_, err := w.Stats()
-	// 	if err != nil {
-	// 		log.Println("Error updating stats for %s", w.Name)
-	// 	}
-	// }
+	log.Println("Poll...")
+	var pollWaitGroup sync.WaitGroup
+	for _, w := range m.workers {
+		pollWaitGroup.Add(1)
+		go func(w *worker.BaseWorker) {
+			defer pollWaitGroup.Done()
+			_, err := w.Stats()
+			if err != nil {
+				log.Printf("Error updating stats for %s", w.Name)
+			}
+		}(w)
+	}
+	pollWaitGroup.Wait()
 
 	// Inference
-	// log.Println("Inference...")
+	log.Println("Inference...")
+	for _, w := range m.workers {
+		m.predictor.Predict(w)
+	}
 
 	// Assign Job(s)
 	log.Println("Scheduling")
