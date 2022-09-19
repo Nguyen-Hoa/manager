@@ -7,7 +7,6 @@ go 1.17
 require (
 	github.com/Nguyen-Hoa/worker v1.3.1
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
-	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
 )
 
 require (
