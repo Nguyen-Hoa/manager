@@ -116,7 +116,8 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	}
 
 	if errJob == nil && errWorker == nil {
-		target.StartJob(newJob.Image, newJob.Cmd)
+		// target.StartJob(newJob.Image, newJob.Cmd)
+		log.Printf("Would have started %s at %s", newJob.Image, target.Name)
 	}
 
 	// Wait for end of time step
@@ -140,7 +141,7 @@ func (m *Manager) requestJob() (Job, error) {
 
 /* Testing ONLY*/
 func (m *Manager) findWorker() (*worker.BaseWorker, error) {
-	w := m.workers["kraken"]
+	w := m.workers["kimchi"]
 	return w, nil
 }
 
