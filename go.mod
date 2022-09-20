@@ -5,9 +5,9 @@ go 1.17
 // replace github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 => /Users/hoanguyen/MoCA/repos/worker
 
 require (
+	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220920012146-aa73f0390c6a
 	github.com/Nguyen-Hoa/profile v1.2.1
 	github.com/Nguyen-Hoa/worker v1.3.1
-	github.com/TTRSQ/csvlogger v1.1.0
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
 	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
 )

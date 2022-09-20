@@ -9,7 +9,7 @@ import (
 
 	profile "github.com/Nguyen-Hoa/profile"
 	worker "github.com/Nguyen-Hoa/worker"
-	logger "github.com/TTRSQ/csvlogger"
+	logger "github.com/Nguyen-Hoa/csvlogger"
 )
 
 type Manager struct {
