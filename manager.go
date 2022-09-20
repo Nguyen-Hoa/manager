@@ -1,12 +1,15 @@
 package manager
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"sync"
 	"time"
 
+	profile "github.com/Nguyen-Hoa/profile"
 	worker "github.com/Nguyen-Hoa/worker"
+	logger "github.com/TTRSQ/csvlogger"
 )
 
 type Manager struct {
@@ -27,6 +30,10 @@ type Manager struct {
 	currentNumJobsRunning int
 	running               bool
 	JobQueue              []Job
+
+	// loggers
+	baseLogPath string
+	statsLogger logger.Logger
 }
 
 type Job struct {
@@ -43,6 +50,7 @@ type ManagerConfig struct {
 	ModelPath   string                `json:"modelPath"`
 	Workers     []worker.WorkerConfig `json:"workers"`
 	JobQueue    []Job                 `json:"jobs"`
+	BaseLogPath string                `json:"baseLogPath"`
 }
 
 func (m *Manager) Init(config ManagerConfig) error {
@@ -51,6 +59,13 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.debug = config.Debug
 	m.maxTimeStep = config.MaxTimeStep
 	m.stepSize = time.Duration(config.StepSize) * time.Second
+
+	m.baseLogPath = config.BaseLogPath
+	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats.csv")
+	if err != nil {
+		return err
+	}
+	m.statsLogger = statsLogger
 
 	// TODO: How to create init generic predictor?
 	predictor := DNN{}
@@ -65,7 +80,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 		if err != nil {
 			log.Println("Failed to initialize worker", w.Name)
 			log.Println(err)
-		} else if available != true {
+		} else if !available {
 			log.Println("Worker unavailable, ensure worker server is running.", w.Name)
 		}
 		m.workers[w.Name] = _worker
@@ -92,6 +107,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
 			}
+			m.Log(w)
 		}(w)
 	}
 	pollWaitGroup.Wait()
@@ -131,7 +147,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 
 func (m *Manager) requestJob() (Job, error) {
 	if len(m.JobQueue) <= 0 {
-		return Job{}, errors.New("No jobs remaining")
+		return Job{}, errors.New("no jobs remaining")
 	}
 
 	job := m.JobQueue[0]
@@ -160,5 +176,20 @@ func (m *Manager) Start() error {
 		}
 	}
 
+	return nil
+}
+
+func (m *Manager) Log(w *worker.BaseWorker) error {
+	marsh_stats, err := json.Marshal(w.GetStats())
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	stats := profile.DNN_params{}
+	if err := json.Unmarshal(marsh_stats, &stats); err != nil {
+		return err
+	}
+
+	m.statsLogger.Add(stats)
 	return nil
 }
