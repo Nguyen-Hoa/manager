@@ -7,18 +7,19 @@ import (
 	"sync"
 	"time"
 
+	logger "github.com/Nguyen-Hoa/csvlogger"
 	profile "github.com/Nguyen-Hoa/profile"
 	worker "github.com/Nguyen-Hoa/worker"
-	logger "github.com/Nguyen-Hoa/csvlogger"
 )
 
 type Manager struct {
 	// config
-	logging     bool
-	verbose     bool
-	debug       bool
-	maxTimeStep int
-	stepSize    time.Duration
+	logging      bool
+	verbose      bool
+	debug        bool
+	maxTimeStep  int
+	stepSize     time.Duration
+	HasPredictor bool
 
 	// models
 	predictor *DNN
@@ -59,6 +60,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.debug = config.Debug
 	m.maxTimeStep = config.MaxTimeStep
 	m.stepSize = time.Duration(config.StepSize) * time.Second
+	m.HasPredictor = false
 
 	m.baseLogPath = config.BaseLogPath
 	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats.csv")
@@ -68,9 +70,12 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.statsLogger = statsLogger
 
 	// TODO: How to create init generic predictor?
-	predictor := DNN{}
-	predictor.Init(config.ModelPath)
-	m.predictor = &predictor
+	if config.ModelPath != "" {
+		predictor := DNN{}
+		predictor.Init(config.ModelPath)
+		m.predictor = &predictor
+		m.HasPredictor = true
+	}
 
 	m.workers = make(map[string]*worker.BaseWorker)
 	m.JobQueue = config.JobQueue
@@ -113,27 +118,31 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	pollWaitGroup.Wait()
 
 	// Inference
-	log.Println("Inference...")
-	for _, w := range m.workers {
-		m.predictor.Predict(w)
+	if m.HasPredictor {
+		log.Println("Inference...")
+		for _, w := range m.workers {
+			m.predictor.Predict(w)
+		}
 	}
 
 	// Assign Job(s)
-	log.Println("Scheduling")
+	if len(m.JobQueue) > 0 {
+		log.Println("Scheduling")
 
-	newJob, errJob := m.requestJob()
-	if errJob != nil {
-		log.Println(errJob)
-	}
+		newJob, errJob := m.requestJob()
+		if errJob != nil {
+			log.Println(errJob)
+		}
 
-	target, errWorker := m.findWorker()
-	if errWorker != nil {
-		log.Println(errWorker)
-	}
+		target, errWorker := m.findWorker()
+		if errWorker != nil {
+			log.Println(errWorker)
+		}
 
-	if errJob == nil && errWorker == nil {
-		// target.StartJob(newJob.Image, newJob.Cmd)
-		log.Printf("Would have started %s at %s", newJob.Image, target.Name)
+		if errJob == nil && errWorker == nil {
+			// target.StartJob(newJob.Image, newJob.Cmd)
+			log.Printf("Would have started %s at %s", newJob.Image, target.Name)
+		}
 	}
 
 	// Wait for end of time step
