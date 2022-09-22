@@ -4,6 +4,8 @@ github.com/Microsoft/go-winio v0.5.2 h1:a9IhgEQBCUEk6QCdml9CiJGhAws+YwffDHEMp1VM
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220920012146-aa73f0390c6a h1:OnjwU59ZA5yiu5g84Z57KvnRFGzb8JWCJxRFaWMQWSk=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220920012146-aa73f0390c6a/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
+github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3 h1:eDraL8yqphvN/+hlUgSYX2sJuEp4n3+Rru3udI5tI0Y=
+github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
 github.com/Nguyen-Hoa/profile v0.0.0-20220914154622-1c9787b9a255/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
 github.com/Nguyen-Hoa/profile v1.2.1 h1:j3ryjcXfy1FlLzur8QJdotP7d3WDOLaXSBMEvlGwMAc=
 github.com/Nguyen-Hoa/profile v1.2.1/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
