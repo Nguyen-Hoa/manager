@@ -189,13 +189,15 @@ func (m *Manager) Start() error {
 }
 
 func (m *Manager) Log(w *worker.BaseWorker) error {
-	marsh_stats, err := json.Marshal(w.GetStats())
+	stats_ := w.GetStats()
+	marsh_stats, err := json.Marshal(stats_)
 	if err != nil {
 		log.Print(err)
 		return err
 	}
 	stats := profile.DNN_params{}
 	if err := json.Unmarshal(marsh_stats, &stats); err != nil {
+		log.Print(err)
 		return err
 	}
 
