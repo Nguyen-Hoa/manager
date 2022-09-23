@@ -184,7 +184,6 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	if time.Since(t0) < m.stepSize {
 		time.Sleep(m.stepSize - time.Since(t0))
 	}
-	m.currentTimeStep += 1
 	done <- true
 	return nil
 }
@@ -231,6 +230,8 @@ func (m *Manager) Start() error {
 
 		if m.currentTimeStep >= m.maxTimeStep {
 			break
+		} else {
+			m.currentTimeStep += 1
 		}
 	}
 

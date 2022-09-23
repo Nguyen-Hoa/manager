@@ -9,8 +9,8 @@ github.com/Nguyen-Hoa/profile v1.2.4 h1:fFhBW0cPX0MXYgR1O2ncTTw9haUodj7orKERZvY/
 github.com/Nguyen-Hoa/profile v1.2.4/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
 github.com/Nguyen-Hoa/wattsup v1.4.1 h1:aiId0st4WGkVkHbeYYjUQYaIJfmyNNX7dtQmc2un9FU=
 github.com/Nguyen-Hoa/wattsup v1.4.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
-github.com/Nguyen-Hoa/worker v1.3.7 h1:GgJTqmBa86IgGIjqKZvpFEcaDAdReRioGZyw870Q/Gw=
-github.com/Nguyen-Hoa/worker v1.3.7/go.mod h1:prPWuVXC0fyZKIGU0amy4ijABkknqKdkwjb7AJMfHxc=
+github.com/Nguyen-Hoa/worker v1.3.8 h1:TElR3Uloq3AuyV/f+CwgFqhLDFub2FkJoF1KTGDt+yo=
+github.com/Nguyen-Hoa/worker v1.3.8/go.mod h1:prPWuVXC0fyZKIGU0amy4ijABkknqKdkwjb7AJMfHxc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/creack/pty v1.1.11/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
