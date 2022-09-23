@@ -90,9 +90,15 @@ func (m *Manager) Init(config ManagerConfig) error {
 			log.Println("Failed to initialize worker", w.Name)
 			log.Println(err)
 		} else if !available {
-			log.Println("Worker unavailable, ensure worker server is running.", w.Name)
+			log.Println("Worker unavailable, ensure worker server is running", w.Name)
+		}
+
+		if err := _worker.StartMeter(); err != nil {
+			log.Println("Worker meter failure", w.Name)
+			return err
 		}
 		m.workers[w.Name] = _worker
+		log.Println("Initialized", w.Name)
 	}
 
 	m.startTime = ""
@@ -124,7 +130,7 @@ func NewManager(configPath string) (Manager, error) {
 		log.Fatal(err)
 		return m, err
 	}
-	log.Println("Manager initialized")
+	log.Println("Initialized manager")
 	return m, nil
 }
 
@@ -225,6 +231,13 @@ func (m *Manager) Start() error {
 
 		if m.currentTimeStep >= m.maxTimeStep {
 			break
+		}
+	}
+
+	for _, w := range m.workers {
+		if err := w.StopMeter(); err != nil {
+			log.Println("Worker meter failure", w.Name)
+			return err
 		}
 	}
 
