@@ -10,6 +10,8 @@ import (
 	logger "github.com/Nguyen-Hoa/csvlogger"
 	profile "github.com/Nguyen-Hoa/profile"
 	worker "github.com/Nguyen-Hoa/worker"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Manager struct {
@@ -170,8 +172,22 @@ func (m *Manager) findWorker() (*worker.BaseWorker, error) {
 	return w, nil
 }
 
+func (m *Manager) receiveJob(c *gin.Context) {
+	job := Job{}
+	if err := c.BindJSON(&job); err != nil {
+		c.JSON(400, "Failed to parse container")
+	}
+	m.JobQueue = append(m.JobQueue, job)
+	c.JSON(200, "")
+}
+
 func (m *Manager) Start() error {
 	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
+
+	// Expose API to submit jobs
+	r := gin.Default()
+	r.POST("/submit-job", m.receiveJob)
+	r.Run()
 
 	// main loop
 	for {
