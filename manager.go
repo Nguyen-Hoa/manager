@@ -3,7 +3,9 @@ package manager
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -101,6 +103,31 @@ func (m *Manager) Init(config ManagerConfig) error {
 	return nil
 }
 
+func parseConfig(configPath string) ManagerConfig {
+	jsonFile, err := os.Open(configPath)
+	if err != nil {
+		log.Fatal("Failed to parse configuration file.")
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var config ManagerConfig
+	json.Unmarshal([]byte(byteValue), &config)
+	return config
+}
+
+func NewManager(configPath string) (Manager, error) {
+	m := Manager{}
+	config := parseConfig(configPath)
+
+	if err := m.Init(config); err != nil {
+		log.Println("Failed to initialize manager!")
+		log.Fatal(err)
+		return m, err
+	}
+	log.Println("Manager initialized")
+	return m, nil
+}
+
 func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Poll
@@ -187,7 +214,7 @@ func (m *Manager) Start() error {
 	// Expose API to submit jobs
 	r := gin.Default()
 	r.POST("/submit-job", m.receiveJob)
-	r.Run()
+	go r.Run()
 
 	// main loop
 	for {
@@ -216,6 +243,7 @@ func (m *Manager) Log(w *worker.BaseWorker) error {
 		log.Print(err)
 		return err
 	}
+	stats.MachineID = w.Name
 
 	m.statsLogger.Add(stats)
 	return nil
