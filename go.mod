@@ -1,13 +1,13 @@
 module github.com/Nguyen-Hoa/manager
 
-go 1.17
+go 1.19
 
 // replace github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 => /Users/hoanguyen/MoCA/repos/worker
 
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
-	github.com/Nguyen-Hoa/profile v1.2.4
-	github.com/Nguyen-Hoa/worker v1.3.8
+	github.com/Nguyen-Hoa/profile v1.2.5
+	github.com/Nguyen-Hoa/worker v1.3.9
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
 	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
 	github.com/gin-gonic/gin v1.8.1
@@ -45,10 +45,10 @@ require (
 	github.com/tklauser/numcpus v0.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0 // indirect
+	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220923203811-8be639271d50 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/net v0.0.0-20220927171203-f486391704dc // indirect
+	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

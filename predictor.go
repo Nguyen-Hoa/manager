@@ -6,3 +6,8 @@ type BasePredictor interface {
 	Init(string) error
 	Predict(*worker.BaseWorker) (interface{}, error)
 }
+
+type Predictor interface {
+	Init(string) error
+	Predict(*worker.BaseWorker) (interface{}, error)
+}

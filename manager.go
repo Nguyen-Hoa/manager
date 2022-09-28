@@ -26,7 +26,7 @@ type Manager struct {
 	HasPredictor bool
 
 	// models
-	predictor *DNN
+	predictor Predictor
 
 	// status
 	workers               map[string]*worker.BaseWorker
@@ -47,15 +47,16 @@ type Job struct {
 }
 
 type ManagerConfig struct {
-	Logging     bool                  `json:"logging"`
-	Verbose     bool                  `json:"verbose"`
-	Debug       bool                  `json:"debug"`
-	MaxTimeStep int                   `json:"maxTimeStep"`
-	StepSize    int                   `json:"stepSize"`
-	ModelPath   string                `json:"modelPath"`
-	Workers     []worker.WorkerConfig `json:"workers"`
-	JobQueue    []Job                 `json:"jobs"`
-	BaseLogPath string                `json:"baseLogPath"`
+	Logging                bool                  `json:"logging"`
+	Verbose                bool                  `json:"verbose"`
+	Debug                  bool                  `json:"debug"`
+	MaxTimeStep            int                   `json:"maxTimeStep"`
+	StepSize               int                   `json:"stepSize"`
+	ModelPath              string                `json:"modelPath"`
+	InferenceServerAddress string                `json:"inferenceServerAddress"`
+	Workers                []worker.WorkerConfig `json:"workers"`
+	JobQueue               []Job                 `json:"jobs"`
+	BaseLogPath            string                `json:"baseLogPath"`
 }
 
 func (m *Manager) Init(config ManagerConfig) error {
@@ -77,6 +78,13 @@ func (m *Manager) Init(config ManagerConfig) error {
 	if config.ModelPath != "" {
 		predictor := DNN{}
 		predictor.Init(config.ModelPath)
+		m.predictor = &predictor
+		m.HasPredictor = true
+	}
+
+	if config.InferenceServerAddress != "" {
+		predictor := InferenceServer{}
+		predictor.Init(config.InferenceServerAddress)
 		m.predictor = &predictor
 		m.HasPredictor = true
 	}
@@ -156,7 +164,12 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	if m.HasPredictor {
 		log.Println("Inference...")
 		for _, w := range m.workers {
-			m.predictor.Predict(w)
+			pred, err := m.predictor.Predict(w)
+			if err != nil {
+				log.Printf("failed to predict for %s", w.Name)
+			} else {
+				log.Print(pred)
+			}
 		}
 	}
 
