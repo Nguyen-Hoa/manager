@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -75,7 +76,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.stepSize = time.Duration(config.StepSize) * time.Second
 	m.HasPredictor = false
 
-	m.baseLogPath = config.BaseLogPath
+	m.baseLogPath = filepath.Join(config.BaseLogPath, time.Now().Format("2006_01_02-15:04:05"))
+	if err := os.MkdirAll(m.baseLogPath, os.ModePerm); err != nil {
+		return err
+	}
+
 	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats.csv")
 	if err != nil {
 		return err
