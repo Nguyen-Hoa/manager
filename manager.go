@@ -37,8 +37,9 @@ type Manager struct {
 	APIPort               string
 
 	// loggers
-	baseLogPath string
-	statsLogger logger.Logger
+	baseLogPath   string
+	statsLogger   logger.Logger
+	latencyLogger logger.Logger
 }
 
 type Job struct {
@@ -60,6 +61,12 @@ type ManagerConfig struct {
 	BaseLogPath            string                `json:"baseLogPath"`
 }
 
+type Latency struct {
+	MachineID string
+	Type      string
+	Latency   time.Duration
+}
+
 func (m *Manager) Init(config ManagerConfig) error {
 	m.logging = config.Logging
 	m.verbose = config.Verbose
@@ -74,6 +81,12 @@ func (m *Manager) Init(config ManagerConfig) error {
 		return err
 	}
 	m.statsLogger = statsLogger
+
+	latencyLogger, err := logger.NewLogger(m.baseLogPath, "latency.csv")
+	if err != nil {
+		return err
+	}
+	m.latencyLogger = latencyLogger
 
 	// TODO: How to create init generic predictor?
 	if config.ModelPath != "" {
@@ -157,12 +170,15 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	for _, w := range m.workers {
 		pollWaitGroup.Add(1)
 		go func(w *worker.BaseWorker) {
+			t0 := time.Now()
 			defer pollWaitGroup.Done()
 			_, err := w.Stats()
+			tPoll := time.Since(t0)
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
 			}
-			m.Log(w)
+			m.LogStats(w)
+			m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
 		}(w)
 	}
 	pollWaitGroup.Wait()
@@ -171,7 +187,10 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	if m.HasPredictor {
 		// log.Println("Inference...")
 		for _, w := range m.workers {
+			t0 := time.Now()
 			pred, err := m.predictor.Predict(w)
+			tInference := time.Since(t0)
+			m.latencyLogger.Add(Latency{w.Name, "inference", tInference})
 			if err != nil {
 				log.Printf("failed to predict for %s", w.Name)
 			} else {
@@ -195,9 +214,12 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 }
 
 func (m *Manager) schedule() error {
+	t0 := time.Now()
 	job := m.JobQueue[0]
 	m.JobQueue = m.JobQueue[1:]
 	target, err := m.findWorker()
+	tSchedule := time.Since(t0)
+	m.latencyLogger.Add(Latency{"manager", "schedule", tSchedule})
 	if err != nil {
 		return err
 	}
@@ -256,7 +278,7 @@ func (m *Manager) Start() error {
 	return nil
 }
 
-func (m *Manager) Log(w *worker.BaseWorker) error {
+func (m *Manager) LogStats(w *worker.BaseWorker) error {
 	stats_ := w.GetStats()
 	marsh_stats, err := json.Marshal(stats_)
 	if err != nil {
