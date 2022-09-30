@@ -2,7 +2,6 @@ package manager
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,6 +34,7 @@ type Manager struct {
 	currentNumJobsRunning int
 	running               bool
 	JobQueue              []Job
+	APIPort               string
 
 	// loggers
 	baseLogPath string
@@ -56,6 +56,7 @@ type ManagerConfig struct {
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
 	Workers                []worker.WorkerConfig `json:"workers"`
 	JobQueue               []Job                 `json:"jobs"`
+	APIPort                string                `json:"apiPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
 }
 
@@ -89,8 +90,14 @@ func (m *Manager) Init(config ManagerConfig) error {
 		m.HasPredictor = true
 	}
 
-	m.workers = make(map[string]*worker.BaseWorker)
 	m.JobQueue = config.JobQueue
+	if config.APIPort != "" {
+		m.APIPort = config.APIPort
+	} else {
+		m.APIPort = ":3001"
+	}
+
+	m.workers = make(map[string]*worker.BaseWorker)
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
 		available := _worker.IsAvailable()
@@ -145,7 +152,7 @@ func NewManager(configPath string) (Manager, error) {
 func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Poll
-	log.Println("Poll...")
+	// log.Println("Poll...")
 	var pollWaitGroup sync.WaitGroup
 	for _, w := range m.workers {
 		pollWaitGroup.Add(1)
@@ -162,7 +169,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Inference
 	if m.HasPredictor {
-		log.Println("Inference...")
+		// log.Println("Inference...")
 		for _, w := range m.workers {
 			pred, err := m.predictor.Predict(w)
 			if err != nil {
@@ -175,22 +182,8 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Assign Job(s)
 	if len(m.JobQueue) > 0 {
-		log.Println("Scheduling")
-
-		newJob, errJob := m.requestJob()
-		if errJob != nil {
-			log.Println(errJob)
-		}
-
-		target, errWorker := m.findWorker()
-		if errWorker != nil {
-			log.Println(errWorker)
-		}
-
-		if errJob == nil && errWorker == nil {
-			// target.StartJob(newJob.Image, newJob.Cmd)
-			log.Printf("Would have started %s at %s", newJob.Image, target.Name)
-		}
+		// log.Println("Scheduling")
+		m.schedule()
 	}
 
 	// Wait for end of time step
@@ -201,14 +194,19 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	return nil
 }
 
-func (m *Manager) requestJob() (Job, error) {
-	if len(m.JobQueue) <= 0 {
-		return Job{}, errors.New("no jobs remaining")
-	}
-
+func (m *Manager) schedule() error {
 	job := m.JobQueue[0]
 	m.JobQueue = m.JobQueue[1:]
-	return job, nil
+	target, err := m.findWorker()
+	if err != nil {
+		return err
+	}
+
+	if err := target.StartJob(job.Image, job.Cmd); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /* Testing ONLY*/
@@ -232,7 +230,7 @@ func (m *Manager) Start() error {
 	// Expose API to submit jobs
 	r := gin.Default()
 	r.POST("/submit-job", m.receiveJob)
-	go r.Run()
+	go r.Run(":3001")
 
 	// main loop
 	for {
