@@ -2,8 +2,11 @@ package manager
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/rpc"
 	"os"
 	"path/filepath"
 	"sync"
@@ -36,6 +39,7 @@ type Manager struct {
 	running               bool
 	JobQueue              []Job
 	APIPort               string
+	RPCPort               string
 
 	// loggers
 	baseLogPath   string
@@ -59,6 +63,7 @@ type ManagerConfig struct {
 	Workers                []worker.WorkerConfig `json:"workers"`
 	JobQueue               []Job                 `json:"jobs"`
 	APIPort                string                `json:"apiPort"`
+	RPCPort                string                `json:"rpcPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
 }
 
@@ -112,7 +117,13 @@ func (m *Manager) Init(config ManagerConfig) error {
 	if config.APIPort != "" {
 		m.APIPort = config.APIPort
 	} else {
-		m.APIPort = ":3001"
+		m.APIPort = ""
+	}
+
+	if config.RPCPort != "" {
+		m.RPCPort = config.RPCPort
+	} else {
+		m.RPCPort = ""
 	}
 
 	m.workers = make(map[string]*worker.BaseWorker)
@@ -242,7 +253,7 @@ func (m *Manager) findWorker() (*worker.BaseWorker, error) {
 	return w, nil
 }
 
-func (m *Manager) receiveJob(c *gin.Context) {
+func (m *Manager) httpReceiveJob(c *gin.Context) {
 	job := Job{}
 	if err := c.BindJSON(&job); err != nil {
 		c.JSON(400, "Failed to parse container")
@@ -251,13 +262,26 @@ func (m *Manager) receiveJob(c *gin.Context) {
 	c.JSON(200, "")
 }
 
+func (m *Manager) rcpReceiveJob(job Job, reply *string) error {
+	m.JobQueue = append(m.JobQueue, job)
+	return nil
+}
+
 func (m *Manager) Start() error {
 	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
 
 	// Expose API to submit jobs
-	r := gin.Default()
-	r.POST("/submit-job", m.receiveJob)
-	go r.Run(":3001")
+	if m.APIPort != "" {
+		r := gin.Default()
+		r.POST("/submit-job", m.httpReceiveJob)
+		go r.Run(m.APIPort)
+	} else if m.RPCPort != "" {
+		rpc.Register(&m)
+		rpc.HandleHTTP()
+		http.ListenAndServe(m.RPCPort, nil)
+	} else {
+		return errors.New("could not setup endpoint to receive jobs. Check HTTP or RCP config")
+	}
 
 	// main loop
 	for {
