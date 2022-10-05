@@ -2,12 +2,7 @@ package manager
 
 import "github.com/Nguyen-Hoa/worker"
 
-type BasePredictor interface {
-	Init(string) error
-	Predict(*worker.BaseWorker) (interface{}, error)
-}
-
 type Predictor interface {
 	Init(string) error
-	Predict(*worker.BaseWorker) (interface{}, error)
+	Predict(*worker.ManagerWorker) (float32, error)
 }

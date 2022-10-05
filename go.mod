@@ -2,12 +2,13 @@ module github.com/Nguyen-Hoa/manager
 
 go 1.19
 
-// replace github.com/Nguyen-Hoa/worker v1.2.3-0.20220907212901-89384daad759 => /Users/hoanguyen/MoCA/repos/worker
+// replace github.com/Nguyen-Hoa/worker => ../worker
 
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
 	github.com/Nguyen-Hoa/profile v1.2.5
-	github.com/Nguyen-Hoa/worker v1.3.9
+	github.com/Nguyen-Hoa/worker v1.4.0
+	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
 	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
 	github.com/gin-gonic/gin v1.8.1

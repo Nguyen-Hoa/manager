@@ -8,8 +8,10 @@ github.com/Nguyen-Hoa/profile v1.2.5 h1:nBFsZ+SpTIh0YF2c1hmLqKU9SG7qR9KsQ9pNOWOD
 github.com/Nguyen-Hoa/profile v1.2.5/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
 github.com/Nguyen-Hoa/wattsup v1.4.1 h1:aiId0st4WGkVkHbeYYjUQYaIJfmyNNX7dtQmc2un9FU=
 github.com/Nguyen-Hoa/wattsup v1.4.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
-github.com/Nguyen-Hoa/worker v1.3.9 h1:tvwrVSQt3n0wbN4AXe+RIXXodjDaeCr0qDOstcRoMUM=
-github.com/Nguyen-Hoa/worker v1.3.9/go.mod h1:JCq+QdPSGfFMAUcFt3hXdPT8mHsk/L6t6OCXoJ3Y/HY=
+github.com/Nguyen-Hoa/worker v1.4.0 h1:vmptHmxOJPqcK44aGJsolnsYHzlnqswsjy6fMgndSdE=
+github.com/Nguyen-Hoa/worker v1.4.0/go.mod h1:JCq+QdPSGfFMAUcFt3hXdPT8mHsk/L6t6OCXoJ3Y/HY=
+github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd h1:ePesaBzdTmoMQjwqRCLP2jY+jjWMBpwws/LEQdt1fMM=
+github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd/go.mod h1:TNehV1AhBwtT7Bd+rh8G6MoGDbBLNs/sKdk3nvr4Yzg=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

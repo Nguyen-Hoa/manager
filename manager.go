@@ -16,6 +16,7 @@ import (
 	profile "github.com/Nguyen-Hoa/profile"
 	worker "github.com/Nguyen-Hoa/worker"
 
+	"github.com/braintree/manners"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,11 +33,12 @@ type Manager struct {
 	predictor Predictor
 
 	// status
-	workers               map[string]*worker.BaseWorker
+	workers               map[string]*worker.ManagerWorker
 	startTime             string
 	currentTimeStep       int
 	currentNumJobsRunning int
 	running               bool
+	experimentDone        bool
 	JobQueue              []Job
 	APIPort               string
 	RPCPort               string
@@ -48,8 +50,9 @@ type Manager struct {
 }
 
 type Job struct {
-	Image string   `json:"image"`
-	Cmd   []string `json:"cmd"`
+	Image    string   `json:"image"`
+	Cmd      []string `json:"cmd"`
+	Duration int      `json:"duration"`
 }
 
 type ManagerConfig struct {
@@ -86,13 +89,13 @@ func (m *Manager) Init(config ManagerConfig) error {
 		return err
 	}
 
-	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats.csv")
+	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats")
 	if err != nil {
 		return err
 	}
 	m.statsLogger = statsLogger
 
-	latencyLogger, err := logger.NewLogger(m.baseLogPath, "latency.csv")
+	latencyLogger, err := logger.NewLogger(m.baseLogPath, "latency")
 	if err != nil {
 		return err
 	}
@@ -126,7 +129,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 		m.RPCPort = ""
 	}
 
-	m.workers = make(map[string]*worker.BaseWorker)
+	m.workers = make(map[string]*worker.ManagerWorker)
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
 		available := _worker.IsAvailable()
@@ -149,6 +152,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.currentTimeStep = 0
 	m.currentNumJobsRunning = 0
 	m.running = true
+	m.experimentDone = false
 
 	return nil
 }
@@ -183,9 +187,10 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	// Poll
 	// log.Println("Poll...")
 	var pollWaitGroup sync.WaitGroup
+	var jobsRunning int = 0
 	for _, w := range m.workers {
 		pollWaitGroup.Add(1)
-		go func(w *worker.BaseWorker) {
+		go func(w *worker.ManagerWorker) {
 			t0 := time.Now()
 			defer pollWaitGroup.Done()
 			_, err := w.Stats()
@@ -193,24 +198,27 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
 			}
-			m.LogStats(w)
+			m.logStats(w)
 			m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
+			jobsRunning += len(w.RunningJobs)
 		}(w)
 	}
 	pollWaitGroup.Wait()
+	m.currentNumJobsRunning = jobsRunning
 
 	// Inference
 	if m.HasPredictor {
 		// log.Println("Inference...")
 		for _, w := range m.workers {
 			t0 := time.Now()
-			pred, err := m.predictor.Predict(w)
+			prediction, err := m.predictor.Predict(w)
+			log.Print(prediction)
+			w.LatestPredictedPower = prediction
 			tInference := time.Since(t0)
 			m.latencyLogger.Add(Latency{w.Name, "inference", tInference})
 			if err != nil {
+				log.Print(err)
 				log.Printf("failed to predict for %s", w.Name)
-			} else {
-				log.Print(pred)
 			}
 		}
 	}
@@ -218,7 +226,9 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	// Assign Job(s)
 	if len(m.JobQueue) > 0 {
 		// log.Println("Scheduling")
-		m.schedule()
+		if err := m.schedule(); err != nil {
+			log.Print(err)
+		}
 	}
 
 	// Wait for end of time step
@@ -240,7 +250,7 @@ func (m *Manager) schedule() error {
 		return err
 	}
 
-	if err := target.StartJob(job.Image, job.Cmd); err != nil {
+	if err := target.StartJob(job.Image, job.Cmd, job.Duration); err != nil {
 		return err
 	}
 
@@ -248,7 +258,7 @@ func (m *Manager) schedule() error {
 }
 
 /* Testing ONLY*/
-func (m *Manager) findWorker() (*worker.BaseWorker, error) {
+func (m *Manager) findWorker() (*worker.ManagerWorker, error) {
 	w := m.workers["kimchi"]
 	return w, nil
 }
@@ -262,9 +272,10 @@ func (m *Manager) httpReceiveJob(c *gin.Context) {
 	c.JSON(200, "")
 }
 
-func (m *Manager) rcpReceiveJob(job Job, reply *string) error {
-	m.JobQueue = append(m.JobQueue, job)
-	return nil
+func (m *Manager) httpExperimentDone(c *gin.Context) {
+	log.Print("hello?")
+	m.experimentDone = true
+	c.JSON(200, "")
 }
 
 func (m *Manager) Start() error {
@@ -274,7 +285,8 @@ func (m *Manager) Start() error {
 	if m.APIPort != "" {
 		r := gin.Default()
 		r.POST("/submit-job", m.httpReceiveJob)
-		go r.Run(m.APIPort)
+		r.POST("/experiment-done", m.httpExperimentDone)
+		go manners.ListenAndServe("localhost:"+m.APIPort, r)
 	} else if m.RPCPort != "" {
 		rpc.Register(&m)
 		rpc.HandleHTTP()
@@ -290,7 +302,7 @@ func (m *Manager) Start() error {
 		go step(done, t0, m)
 		<-done
 
-		if m.currentTimeStep >= m.maxTimeStep {
+		if m.stopCondition() {
 			break
 		} else {
 			m.currentTimeStep += 1
@@ -304,10 +316,11 @@ func (m *Manager) Start() error {
 		}
 	}
 
+	manners.Close()
 	return nil
 }
 
-func (m *Manager) LogStats(w *worker.BaseWorker) error {
+func (m *Manager) logStats(w *worker.ManagerWorker) error {
 	stats_ := w.GetStats()
 	marsh_stats, err := json.Marshal(stats_)
 	if err != nil {
@@ -323,4 +336,14 @@ func (m *Manager) LogStats(w *worker.BaseWorker) error {
 
 	m.statsLogger.Add(stats)
 	return nil
+}
+
+func (m *Manager) stopCondition() bool {
+	log.Print(m.experimentDone, m.currentNumJobsRunning)
+	if m.currentTimeStep >= m.maxTimeStep {
+		return true
+	} else if m.experimentDone && m.currentNumJobsRunning == 0 {
+		return true
+	}
+	return false
 }

@@ -43,7 +43,7 @@ func (b *DNN) Init(modelPath string) error {
 	return nil
 }
 
-func (b *DNN) Predict(w *worker.BaseWorker) (interface{}, error) {
+func (b *DNN) Predict(w *worker.ManagerWorker) (float32, error) {
 	stats := w.GetStats()
 	scaled_input := b.transform([][]float64{{
 		float64(stats["freq"].(float64)),
@@ -70,7 +70,7 @@ func (b *DNN) Predict(w *worker.BaseWorker) (interface{}, error) {
 	)
 	if err != nil {
 		log.Print("erroneous", err)
-		return nil, err
+		return 0.0, err
 	}
 
 	prediction := res[0].Value().([][]float32)[0][0]
