@@ -60,6 +60,7 @@ type ManagerConfig struct {
 	StepSize               int                   `json:"stepSize"`
 	ModelPath              string                `json:"modelPath"`
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
+	SchedulerType          string                `json:"schedulerType"`
 	Workers                []worker.WorkerConfig `json:"workers"`
 	APIPort                string                `json:"apiPort"`
 	RPCPort                string                `json:"rpcPort"`
@@ -112,6 +113,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 		m.HasPredictor = true
 	}
 
+	// if config.SchedulerType == "" {
+	// 	m
+	// }
+	m.scheduler = &scheduler.FIFO{}
+
 	m.JobQueue = job.SharedJobsArray{}
 	if config.APIPort != "" {
 		m.APIPort = config.APIPort
@@ -140,6 +146,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 			log.Println("Worker meter failure", w.Name)
 			return err
 		}
+		_worker.Available = true
 		m.workers[w.Name] = _worker
 		log.Println("Initialized", w.Name)
 	}
@@ -196,7 +203,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 			}
 			m.logStats(w)
 			m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
-			jobsRunning += len(w.RunningJobs)
+			jobsRunning += w.RunningJobs.Length()
 		}(w)
 	}
 	pollWaitGroup.Wait()
@@ -208,8 +215,9 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		for _, w := range m.workers {
 			t0 := time.Now()
 			prediction, err := m.predictor.Predict(w)
-			log.Print(prediction)
-			w.LatestPredictedPower = prediction
+			if prediction != 0 {
+				w.LatestPredictedPower = prediction
+			}
 			tInference := time.Since(t0)
 			m.latencyLogger.Add(Latency{w.Name, "inference", tInference})
 			if err != nil {
@@ -250,7 +258,6 @@ func (m *Manager) httpReceiveJob(c *gin.Context) {
 }
 
 func (m *Manager) httpExperimentDone(c *gin.Context) {
-	log.Print("hello?")
 	m.experimentDone = true
 	c.JSON(200, "")
 }
@@ -316,7 +323,6 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 }
 
 func (m *Manager) stopCondition() bool {
-	log.Print(m.experimentDone, m.currentNumJobsRunning)
 	if m.currentTimeStep >= m.maxTimeStep {
 		return true
 	} else if m.experimentDone && m.currentNumJobsRunning == 0 {
