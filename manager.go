@@ -42,7 +42,7 @@ type Manager struct {
 	currentNumJobsRunning int
 	running               bool
 	experimentDone        bool
-	JobQueue              []job.Job
+	JobQueue              job.SharedJobsArray
 	APIPort               string
 	RPCPort               string
 
@@ -61,7 +61,6 @@ type ManagerConfig struct {
 	ModelPath              string                `json:"modelPath"`
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
 	Workers                []worker.WorkerConfig `json:"workers"`
-	JobQueue               []job.Job             `json:"jobs"`
 	APIPort                string                `json:"apiPort"`
 	RPCPort                string                `json:"rpcPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
@@ -113,7 +112,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 		m.HasPredictor = true
 	}
 
-	m.JobQueue = config.JobQueue
+	m.JobQueue = job.SharedJobsArray{}
 	if config.APIPort != "" {
 		m.APIPort = config.APIPort
 	} else {
@@ -221,7 +220,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	}
 
 	// Assign Job(s)
-	if len(m.JobQueue) > 0 {
+	if m.JobQueue.Length() > 0 {
 		// log.Println("Scheduling")
 		go func() {
 			t0 := time.Now()
@@ -241,36 +240,12 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	return nil
 }
 
-func (m *Manager) schedule() error {
-	t0 := time.Now()
-	job := m.JobQueue[0]
-	m.JobQueue = m.JobQueue[1:]
-	target, err := m.findWorker()
-	tSchedule := time.Since(t0)
-	m.latencyLogger.Add(Latency{"manager", "schedule", tSchedule})
-	if err != nil {
-		return err
-	}
-
-	if err := target.StartJob(job.Image, job.Cmd, job.Duration); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/* Testing ONLY*/
-func (m *Manager) findWorker() (*worker.ManagerWorker, error) {
-	w := m.workers["kimchi"]
-	return w, nil
-}
-
 func (m *Manager) httpReceiveJob(c *gin.Context) {
 	job := job.Job{}
 	if err := c.BindJSON(&job); err != nil {
 		c.JSON(400, "Failed to parse container")
 	}
-	m.JobQueue = append(m.JobQueue, job)
+	m.JobQueue.Append(job)
 	c.JSON(200, "")
 }
 

@@ -3,10 +3,12 @@ github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2y
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3 h1:eDraL8yqphvN/+hlUgSYX2sJuEp4n3+Rru3udI5tI0Y=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
-github.com/Nguyen-Hoa/job v0.0.1 h1:BZrCQU28q7PZPwyhD1+jTGJer2y5SrXYW+9M02iT7BU=
-github.com/Nguyen-Hoa/job v0.0.1/go.mod h1:/PEf7Uln3SqFlelfdy5+4Rez6Y2KZc31YFsx/zYzGUI=
+github.com/Nguyen-Hoa/job v0.0.5 h1:pYCGEj6cCsfug/611whfgqnw+2oBNy+rOfxDSAUMHGU=
+github.com/Nguyen-Hoa/job v0.0.5/go.mod h1:/PEf7Uln3SqFlelfdy5+4Rez6Y2KZc31YFsx/zYzGUI=
 github.com/Nguyen-Hoa/profile v1.2.5 h1:nBFsZ+SpTIh0YF2c1hmLqKU9SG7qR9KsQ9pNOWOD+RQ=
 github.com/Nguyen-Hoa/profile v1.2.5/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
+github.com/Nguyen-Hoa/scheduler v0.1.0 h1:54ZPLdINwtwW1GDJpEfIt7aJFispBytZSedRlH9a9nM=
+github.com/Nguyen-Hoa/scheduler v0.1.0/go.mod h1:TP9sz10IX1qKWmnDCevWPqBbuTM9Hbnt+bSH+2HOl2o=
 github.com/Nguyen-Hoa/wattsup v1.4.1 h1:aiId0st4WGkVkHbeYYjUQYaIJfmyNNX7dtQmc2un9FU=
 github.com/Nguyen-Hoa/wattsup v1.4.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
 github.com/Nguyen-Hoa/worker v1.4.3 h1:f/s7/TUbe1BHiAaw+ym0vaFDJ0/8F2HlY9ta3pmzy0Y=
