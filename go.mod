@@ -3,11 +3,14 @@ module github.com/Nguyen-Hoa/manager
 go 1.19
 
 // replace github.com/Nguyen-Hoa/worker => ../worker
+replace github.com/Nguyen-Hoa/scheduler => ../scheduler
 
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
+	github.com/Nguyen-Hoa/job v0.0.1
 	github.com/Nguyen-Hoa/profile v1.2.5
-	github.com/Nguyen-Hoa/worker v1.4.0
+	github.com/Nguyen-Hoa/scheduler v0.0.5
+	github.com/Nguyen-Hoa/worker v1.4.3
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
 	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
@@ -15,7 +18,6 @@ require (
 )
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Nguyen-Hoa/wattsup v1.4.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect

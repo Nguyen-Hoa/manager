@@ -1,15 +1,16 @@
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
-github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3 h1:eDraL8yqphvN/+hlUgSYX2sJuEp4n3+Rru3udI5tI0Y=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
+github.com/Nguyen-Hoa/job v0.0.1 h1:BZrCQU28q7PZPwyhD1+jTGJer2y5SrXYW+9M02iT7BU=
+github.com/Nguyen-Hoa/job v0.0.1/go.mod h1:/PEf7Uln3SqFlelfdy5+4Rez6Y2KZc31YFsx/zYzGUI=
 github.com/Nguyen-Hoa/profile v1.2.5 h1:nBFsZ+SpTIh0YF2c1hmLqKU9SG7qR9KsQ9pNOWOD+RQ=
 github.com/Nguyen-Hoa/profile v1.2.5/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
 github.com/Nguyen-Hoa/wattsup v1.4.1 h1:aiId0st4WGkVkHbeYYjUQYaIJfmyNNX7dtQmc2un9FU=
 github.com/Nguyen-Hoa/wattsup v1.4.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
-github.com/Nguyen-Hoa/worker v1.4.0 h1:vmptHmxOJPqcK44aGJsolnsYHzlnqswsjy6fMgndSdE=
-github.com/Nguyen-Hoa/worker v1.4.0/go.mod h1:JCq+QdPSGfFMAUcFt3hXdPT8mHsk/L6t6OCXoJ3Y/HY=
+github.com/Nguyen-Hoa/worker v1.4.3 h1:f/s7/TUbe1BHiAaw+ym0vaFDJ0/8F2HlY9ta3pmzy0Y=
+github.com/Nguyen-Hoa/worker v1.4.3/go.mod h1:q2c69q76y1zYInztZxUd7fBM+oQQANigSrb07fG2ptU=
 github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd h1:ePesaBzdTmoMQjwqRCLP2jY+jjWMBpwws/LEQdt1fMM=
 github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd/go.mod h1:TNehV1AhBwtT7Bd+rh8G6MoGDbBLNs/sKdk3nvr4Yzg=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -148,7 +149,6 @@ golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20201204225414-ed752295db88/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20210616094352-59db8d763f22/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210806184541-e5e7981a1069/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
@@ -188,4 +188,4 @@ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gotest.tools/v3 v3.3.0 h1:MfDY1b1/0xN1CyMlQDac0ziEy9zJQd9CXBRRDHw2jJo=
+gotest.tools/v3 v3.4.0 h1:ZazjZUfuVeZGLAmlKKuyv3IKP5orXcwtOwDQH6YVr6o=

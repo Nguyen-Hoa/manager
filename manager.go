@@ -13,7 +13,9 @@ import (
 	"time"
 
 	logger "github.com/Nguyen-Hoa/csvlogger"
+	job "github.com/Nguyen-Hoa/job"
 	profile "github.com/Nguyen-Hoa/profile"
+	scheduler "github.com/Nguyen-Hoa/scheduler"
 	worker "github.com/Nguyen-Hoa/worker"
 
 	"github.com/braintree/manners"
@@ -31,6 +33,7 @@ type Manager struct {
 
 	// models
 	predictor Predictor
+	scheduler scheduler.Scheduler
 
 	// status
 	workers               map[string]*worker.ManagerWorker
@@ -39,7 +42,7 @@ type Manager struct {
 	currentNumJobsRunning int
 	running               bool
 	experimentDone        bool
-	JobQueue              []Job
+	JobQueue              []job.Job
 	APIPort               string
 	RPCPort               string
 
@@ -47,12 +50,6 @@ type Manager struct {
 	baseLogPath   string
 	statsLogger   logger.Logger
 	latencyLogger logger.Logger
-}
-
-type Job struct {
-	Image    string   `json:"image"`
-	Cmd      []string `json:"cmd"`
-	Duration int      `json:"duration"`
 }
 
 type ManagerConfig struct {
@@ -64,7 +61,7 @@ type ManagerConfig struct {
 	ModelPath              string                `json:"modelPath"`
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
 	Workers                []worker.WorkerConfig `json:"workers"`
-	JobQueue               []Job                 `json:"jobs"`
+	JobQueue               []job.Job             `json:"jobs"`
 	APIPort                string                `json:"apiPort"`
 	RPCPort                string                `json:"rpcPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
@@ -226,9 +223,14 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 	// Assign Job(s)
 	if len(m.JobQueue) > 0 {
 		// log.Println("Scheduling")
-		if err := m.schedule(); err != nil {
-			log.Print(err)
-		}
+		go func() {
+			t0 := time.Now()
+			if err := m.scheduler.Schedule(m.workers, m.JobQueue); err != nil {
+				log.Print(err)
+			}
+			tSchedule := time.Since(t0)
+			m.latencyLogger.Add(Latency{"manager", "schedule", tSchedule})
+		}()
 	}
 
 	// Wait for end of time step
@@ -264,7 +266,7 @@ func (m *Manager) findWorker() (*worker.ManagerWorker, error) {
 }
 
 func (m *Manager) httpReceiveJob(c *gin.Context) {
-	job := Job{}
+	job := job.Job{}
 	if err := c.BindJSON(&job); err != nil {
 		c.JSON(400, "Failed to parse container")
 	}
