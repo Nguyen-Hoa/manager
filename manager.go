@@ -232,7 +232,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		// log.Println("Scheduling")
 		go func() {
 			t0 := time.Now()
-			if err := m.scheduler.Schedule(m.workers, m.JobQueue); err != nil {
+			if err := m.scheduler.Schedule(m.workers, &m.JobQueue); err != nil {
 				log.Print(err)
 			}
 			tSchedule := time.Since(t0)

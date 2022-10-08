@@ -4,7 +4,7 @@ go 1.19
 
 // replace github.com/Nguyen-Hoa/worker => ../worker
 
-// replace github.com/Nguyen-Hoa/scheduler => ../scheduler
+replace github.com/Nguyen-Hoa/scheduler => ../scheduler
 
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
