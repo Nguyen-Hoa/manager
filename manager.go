@@ -196,12 +196,12 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		go func(w *worker.ManagerWorker) {
 			t0 := time.Now()
 			defer pollWaitGroup.Done()
-			_, err := w.Stats()
+			stats, err := w.Stats()
 			tPoll := time.Since(t0)
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
 			}
-			m.logStats(w)
+			w.LatestCPU = float32(stats["cpupercent"].(float64))
 			m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
 			jobsRunning += w.RunningJobs.Length()
 		}(w)
