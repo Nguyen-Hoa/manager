@@ -9,12 +9,11 @@ replace github.com/Nguyen-Hoa/scheduler => ../scheduler
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
 	github.com/Nguyen-Hoa/job v0.1.0
+	github.com/Nguyen-Hoa/predictor v0.0.0-20221010224041-fc62528852f9
 	github.com/Nguyen-Hoa/profile v1.2.5
 	github.com/Nguyen-Hoa/scheduler v0.1.1
-	github.com/Nguyen-Hoa/worker v1.5.0
+	github.com/Nguyen-Hoa/worker v1.5.1
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
-	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa
-	github.com/galeone/tfgo v0.0.0-20220622151904-fc7b7ccad83b
 	github.com/gin-gonic/gin v1.8.1
 )
 
@@ -25,6 +24,8 @@ require (
 	github.com/docker/docker v20.10.18+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa // indirect
+	github.com/galeone/tfgo v0.0.0-20221007142848-b53620202dc5 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect

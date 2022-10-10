@@ -3,7 +3,7 @@ package manager
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -14,6 +14,7 @@ import (
 
 	logger "github.com/Nguyen-Hoa/csvlogger"
 	job "github.com/Nguyen-Hoa/job"
+	predictor "github.com/Nguyen-Hoa/predictor"
 	profile "github.com/Nguyen-Hoa/profile"
 	scheduler "github.com/Nguyen-Hoa/scheduler"
 	worker "github.com/Nguyen-Hoa/worker"
@@ -32,7 +33,7 @@ type Manager struct {
 	HasPredictor bool
 
 	// models
-	predictor Predictor
+	predictor predictor.Predictor
 	scheduler scheduler.Scheduler
 
 	// status
@@ -100,14 +101,14 @@ func (m *Manager) Init(config ManagerConfig) error {
 
 	// TODO: How to create init generic predictor?
 	if config.ModelPath != "" {
-		predictor := DNN{}
+		predictor := predictor.DNN{}
 		predictor.Init(config.ModelPath)
 		m.predictor = &predictor
 		m.HasPredictor = true
 	}
 
 	if config.InferenceServerAddress != "" {
-		predictor := InferenceServer{}
+		predictor := predictor.InferenceServer{}
 		predictor.Init(config.InferenceServerAddress)
 		m.predictor = &predictor
 		m.HasPredictor = true
@@ -166,7 +167,7 @@ func parseConfig(configPath string) ManagerConfig {
 		log.Fatal("Failed to parse configuration file.")
 	}
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 	var config ManagerConfig
 	json.Unmarshal([]byte(byteValue), &config)
 	return config
