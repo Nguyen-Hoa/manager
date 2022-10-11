@@ -6,13 +6,15 @@ go 1.19
 
 replace github.com/Nguyen-Hoa/scheduler => ../scheduler
 
+replace github.com/Nguyen-Hoa/predictor => ../predictor
+
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
 	github.com/Nguyen-Hoa/job v0.1.0
-	github.com/Nguyen-Hoa/predictor v0.0.0-20221010224041-fc62528852f9
+	github.com/Nguyen-Hoa/predictor v0.0.0-20221010231521-ac8d325da0ab
 	github.com/Nguyen-Hoa/profile v1.2.5
 	github.com/Nguyen-Hoa/scheduler v0.1.1
-	github.com/Nguyen-Hoa/worker v1.5.1
+	github.com/Nguyen-Hoa/worker v1.6.0
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
 	github.com/gin-gonic/gin v1.8.1
 )
@@ -25,7 +27,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20220620094824-6bb01e3a58fa // indirect
-	github.com/galeone/tfgo v0.0.0-20221007142848-b53620202dc5 // indirect
+	github.com/galeone/tfgo v0.0.0-20221009122916-2eb64a644fa1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -44,16 +46,16 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/shirou/gopsutil/v3 v3.22.8 // indirect
+	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
+	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220927171203-f486391704dc // indirect
-	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
+	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
+	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

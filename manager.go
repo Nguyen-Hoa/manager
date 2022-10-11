@@ -59,6 +59,7 @@ type ManagerConfig struct {
 	Debug                  bool                  `json:"debug"`
 	MaxTimeStep            int                   `json:"maxTimeStep"`
 	StepSize               int                   `json:"stepSize"`
+	PredictorType          string                `json:"predictorType"`
 	ModelPath              string                `json:"modelPath"`
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
 	SchedulerType          string                `json:"schedulerType"`
@@ -86,38 +87,19 @@ func (m *Manager) Init(config ManagerConfig) error {
 	if err := os.MkdirAll(m.baseLogPath, os.ModePerm); err != nil {
 		return err
 	}
-
 	statsLogger, err := logger.NewLogger(m.baseLogPath, "stats")
 	if err != nil {
 		return err
 	}
 	m.statsLogger = statsLogger
-
 	latencyLogger, err := logger.NewLogger(m.baseLogPath, "latency")
 	if err != nil {
 		return err
 	}
 	m.latencyLogger = latencyLogger
 
-	// TODO: How to create init generic predictor?
-	if config.ModelPath != "" {
-		predictor := predictor.DNN{}
-		predictor.Init(config.ModelPath)
-		m.predictor = &predictor
-		m.HasPredictor = true
-	}
-
-	if config.InferenceServerAddress != "" {
-		predictor := predictor.InferenceServer{}
-		predictor.Init(config.InferenceServerAddress)
-		m.predictor = &predictor
-		m.HasPredictor = true
-	}
-
-	// if config.SchedulerType == "" {
-	// 	m
-	// }
-	m.scheduler = &scheduler.FIFO{}
+	m.initPredictor(config)
+	m.initScheduler(config)
 
 	m.JobQueue = job.SharedJobsArray{}
 	if config.APIPort != "" {
@@ -173,6 +155,38 @@ func parseConfig(configPath string) ManagerConfig {
 	return config
 }
 
+func (m *Manager) initPredictor(config ManagerConfig) error {
+	if config.PredictorType == "analytical" {
+		predictor := predictor.Analytical{}
+		m.predictor = &predictor
+		m.HasPredictor = true
+	} else if config.PredictorType == "dnn" {
+		predictor := predictor.DNN{}
+		predictor.Init(config.ModelPath)
+		m.predictor = &predictor
+		m.HasPredictor = true
+	} else if config.PredictorType == "server" {
+		predictor := predictor.InferenceServer{}
+		predictor.Init(config.InferenceServerAddress)
+		m.predictor = &predictor
+		m.HasPredictor = true
+	} else {
+		m.predictor = nil
+		m.HasPredictor = false
+		log.Print("no predictor initialized.")
+	}
+	return nil
+}
+
+func (m *Manager) initScheduler(config ManagerConfig) error {
+	if config.SchedulerType == "FIFO" {
+		m.scheduler = &scheduler.FIFO{}
+	} else {
+		return errors.New("no scheduler defined")
+	}
+	return nil
+}
+
 func NewManager(configPath string) (Manager, error) {
 	m := Manager{}
 	config := parseConfig(configPath)
@@ -220,6 +234,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 			prediction, err := m.predictor.Predict(w)
 			if prediction != 0 {
 				w.LatestPredictedPower = prediction
+				log.Print(prediction)
 			}
 			tInference := time.Since(t0)
 			m.latencyLogger.Add(Latency{w.Name, "inference", tInference})
@@ -235,6 +250,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		// log.Println("Scheduling")
 		go func() {
 			t0 := time.Now()
+			log.Print(m.scheduler)
 			if err := m.scheduler.Schedule(m.workers, &m.JobQueue); err != nil {
 				log.Print(err)
 			}
