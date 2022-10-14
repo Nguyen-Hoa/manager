@@ -48,9 +48,10 @@ type Manager struct {
 	RPCPort               string
 
 	// loggers
-	baseLogPath   string
-	statsLogger   logger.Logger
-	latencyLogger logger.Logger
+	baseLogPath     string
+	statsLogger     logger.Logger
+	latencyLogger   logger.Logger
+	containerLogger logger.Logger
 }
 
 type ManagerConfig struct {
@@ -97,6 +98,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 		return err
 	}
 	m.latencyLogger = latencyLogger
+	containerLogger, err := logger.NewLogger(m.baseLogPath, "container")
+	if err != nil {
+		return err
+	}
+	m.containerLogger = containerLogger
 
 	m.initPredictor(config)
 	m.initScheduler(config)
@@ -250,7 +256,6 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		// log.Println("Scheduling")
 		go func() {
 			t0 := time.Now()
-			log.Print(m.scheduler)
 			if err := m.scheduler.Schedule(m.workers, &m.JobQueue); err != nil {
 				log.Print(err)
 			}
@@ -338,6 +343,36 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 	stats.MachineID = w.Name
 
 	m.statsLogger.Add(stats)
+
+	// container logging
+	time := stats.Timestamp
+	for key := range w.RunningJobStats {
+		baseStats := w.RunningJobStats[key].(map[string]interface{})
+		memStats := baseStats["memory_stats"].(map[string]interface{})
+		cpuStats := baseStats["cpu_stats"].(map[string]interface{})
+		cpuUsageStats := cpuStats["cpu_usage"].(map[string]interface{})
+		memusage := memStats["usage"]
+		memstats := memStats["limit"]
+		cpuusage := cpuUsageStats["total_usage"]
+		if memusage != nil && memstats != nil && cpuusage != nil {
+			type ContainerStats struct {
+				MachineID string
+				Timestamp string
+				MemUsage  float64
+				MemLimit  float64
+				CpuUsage  float64
+			}
+			ctrStats := ContainerStats{
+				w.Name,
+				time,
+				memStats["usage"].(float64),
+				memStats["limit"].(float64),
+				cpuUsageStats["total_usage"].(float64),
+			}
+			m.containerLogger.Add(ctrStats)
+		}
+	}
+
 	return nil
 }
 
