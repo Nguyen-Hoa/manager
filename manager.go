@@ -352,21 +352,18 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 		cpuStats := baseStats["cpu_stats"].(map[string]interface{})
 		cpuUsageStats := cpuStats["cpu_usage"].(map[string]interface{})
 		memusage := memStats["usage"]
-		memstats := memStats["limit"]
 		cpuusage := cpuUsageStats["total_usage"]
-		if memusage != nil && memstats != nil && cpuusage != nil {
+		if memusage != nil && cpuusage != nil {
 			type ContainerStats struct {
 				MachineID string
 				Timestamp string
 				MemUsage  float64
-				MemLimit  float64
 				CpuUsage  float64
 			}
 			ctrStats := ContainerStats{
 				w.Name,
 				time,
 				memStats["usage"].(float64),
-				memStats["limit"].(float64),
 				cpuUsageStats["total_usage"].(float64),
 			}
 			m.containerLogger.Add(ctrStats)
@@ -374,6 +371,51 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 	}
 
 	return nil
+}
+
+func (m *Manager) state() {
+	type MachineStats struct {
+		MMU float64
+		MCU float64
+	}
+	type ContainerStats struct {
+		CMU float64
+		CCU float64
+	}
+	type WorkerStats struct {
+		MachineID string
+		MachineStats
+		ContainerStats
+	}
+
+	state := make([]WorkerStats, 4)
+	for w := range m.workers {
+		machine_stats := m.workers[w].GetStats()
+		m_stats := MachineStats{machine_stats["VMem"].(float64), machine_stats["Freq"].(float64)}
+
+		total_mem_usage := 0.0
+		total_cpu_usage := 0.0
+		for c := range m.workers[w].RunningJobStats {
+			baseStats := m.workers[w].RunningJobStats[c].(map[string]interface{})
+			memStats := baseStats["memory_stats"].(map[string]interface{})
+			cpuStats := baseStats["cpu_stats"].(map[string]interface{})
+			cpuUsageStats := cpuStats["cpu_usage"].(map[string]interface{})
+			memusage := memStats["usage"]
+			cpuusage := cpuUsageStats["total_usage"]
+			if memusage != nil && cpuusage != nil {
+				total_mem_usage += memStats["usage"].(float64)
+				total_cpu_usage += cpuUsageStats["total_usage"].(float64)
+			}
+		}
+		c_stats := ContainerStats{total_mem_usage, total_cpu_usage}
+
+		stat := WorkerStats{
+			w,
+			m_stats,
+			c_stats,
+		}
+		state = append(state, stat)
+	}
 }
 
 func (m *Manager) stopCondition() bool {
