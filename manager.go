@@ -45,6 +45,7 @@ type Manager struct {
 	experimentDone        bool
 	JobQueue              job.SharedJobsArray
 	APIPort               string
+	APIEngine             *gin.Engine
 	RPCPort               string
 
 	// loggers
@@ -106,19 +107,9 @@ func (m *Manager) Init(config ManagerConfig) error {
 
 	m.initPredictor(config)
 	m.initScheduler(config)
+	m.initAPI(config)
 
 	m.JobQueue = job.SharedJobsArray{}
-	if config.APIPort != "" {
-		m.APIPort = config.APIPort
-	} else {
-		m.APIPort = ""
-	}
-
-	if config.RPCPort != "" {
-		m.RPCPort = config.RPCPort
-	} else {
-		m.RPCPort = ""
-	}
 
 	m.workers = make(map[string]*worker.ManagerWorker)
 	for _, w := range config.Workers {
@@ -187,10 +178,46 @@ func (m *Manager) initPredictor(config ManagerConfig) error {
 func (m *Manager) initScheduler(config ManagerConfig) error {
 	if config.SchedulerType == "FIFO" {
 		m.scheduler = &scheduler.FIFO{}
+	} else if config.SchedulerType == "Agent" {
+		m.scheduler = &scheduler.Agent{}
+		m.scheduler.Init()
 	} else {
 		return errors.New("no scheduler defined")
 	}
 	return nil
+}
+
+func (m *Manager) initAPI(config ManagerConfig) error {
+	if config.APIPort != "" {
+		m.APIPort = config.APIPort
+	} else {
+		m.APIPort = ""
+	}
+
+	if config.RPCPort != "" {
+		m.RPCPort = config.RPCPort
+	} else {
+		m.RPCPort = ""
+	}
+
+	// Expose API to submit jobs
+	if m.APIPort != "" {
+		r := gin.Default()
+		r.POST("/submit-job", m.httpReceiveJob)
+		r.POST("/experiment-done", m.httpExperimentDone)
+		if config.SchedulerType == "Agent" {
+			r.GET("/state", m.httpGetState)
+		}
+		m.APIEngine = r
+		return nil
+	} else if m.RPCPort != "" {
+		rpc.Register(&m)
+		rpc.HandleHTTP()
+		http.ListenAndServe(m.RPCPort, nil)
+		return nil
+	} else {
+		return errors.New("could not setup endpoint to receive jobs. Check HTTP or RCP config")
+	}
 }
 
 func NewManager(configPath string) (Manager, error) {
@@ -286,22 +313,14 @@ func (m *Manager) httpExperimentDone(c *gin.Context) {
 	c.JSON(200, "")
 }
 
+func (m *Manager) httpGetState(c *gin.Context) {
+	state := scheduler.Agent.State(m.workers)
+	c.JSON(200, state)
+}
+
 func (m *Manager) Start() error {
 	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
-
-	// Expose API to submit jobs
-	if m.APIPort != "" {
-		r := gin.Default()
-		r.POST("/submit-job", m.httpReceiveJob)
-		r.POST("/experiment-done", m.httpExperimentDone)
-		go manners.ListenAndServe("localhost:"+m.APIPort, r)
-	} else if m.RPCPort != "" {
-		rpc.Register(&m)
-		rpc.HandleHTTP()
-		http.ListenAndServe(m.RPCPort, nil)
-	} else {
-		return errors.New("could not setup endpoint to receive jobs. Check HTTP or RCP config")
-	}
+	go manners.ListenAndServe("localhost:"+m.APIPort, m.APIEngine)
 
 	// main loop
 	for {
