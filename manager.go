@@ -31,6 +31,7 @@ type Manager struct {
 	maxTimeStep  int
 	stepSize     time.Duration
 	HasPredictor bool
+	ReducedStats bool
 
 	// models
 	predictor predictor.Predictor
@@ -69,12 +70,22 @@ type ManagerConfig struct {
 	APIPort                string                `json:"apiPort"`
 	RPCPort                string                `json:"rpcPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
+	ReducedStats           bool                  `json:"reducedStats"`
 }
 
 type Latency struct {
 	MachineID string
 	Type      string
 	Latency   time.Duration
+}
+
+type ReducedStatsParams struct {
+	Freq       float64 `json:"freq"`
+	VMem       float64 `json:"vmem"`
+	CPUPercent float64 `json:"cpupercent"`
+	Shared     uint64  `json:"shared"`
+	Timestamp  string  `json:"timestamp"`
+	MachineID  string
 }
 
 func (m *Manager) Init(config ManagerConfig) error {
@@ -114,21 +125,12 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.workers = make(map[string]*worker.ManagerWorker)
 	for _, w := range config.Workers {
 		_worker, err := worker.New(w)
-		available := _worker.IsAvailable()
 		if err != nil {
-			log.Println("Failed to initialize worker", w.Name)
-			log.Println(err)
-		} else if !available {
-			log.Println("Worker unavailable, ensure worker server is running", w.Name)
-		}
-
-		if err := _worker.StartMeter(); err != nil {
-			log.Println("Worker meter failure", w.Name)
+			log.Println("Failed to initialize worker ", w.Name, err)
 			return err
 		}
-		_worker.Available = true
 		m.workers[w.Name] = _worker
-		log.Println("Initialized", w.Name)
+		log.Println("Initialized", w.Name, " with power meter: ", _worker.HasPowerMeter)
 	}
 
 	m.startTime = ""
@@ -136,6 +138,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.currentNumJobsRunning = 0
 	m.running = true
 	m.experimentDone = false
+	m.ReducedStats = config.ReducedStats
 
 	return nil
 }
@@ -180,7 +183,6 @@ func (m *Manager) initScheduler(config ManagerConfig) error {
 		m.scheduler = &scheduler.FIFO{}
 	} else if config.SchedulerType == "Agent" {
 		m.scheduler = &scheduler.Agent{}
-		m.scheduler.Init()
 	} else {
 		return errors.New("no scheduler defined")
 	}
@@ -205,6 +207,7 @@ func (m *Manager) initAPI(config ManagerConfig) error {
 		r := gin.Default()
 		r.POST("/submit-job", m.httpReceiveJob)
 		r.POST("/experiment-done", m.httpExperimentDone)
+		r.POST("/schedule", m.httpSchedule)
 		if config.SchedulerType == "Agent" {
 			r.GET("/state", m.httpGetState)
 		}
@@ -244,7 +247,7 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		go func(w *worker.ManagerWorker) {
 			t0 := time.Now()
 			defer pollWaitGroup.Done()
-			stats, err := w.Stats()
+			stats, err := w.Stats(m.ReducedStats)
 			tPoll := time.Since(t0)
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
@@ -314,8 +317,22 @@ func (m *Manager) httpExperimentDone(c *gin.Context) {
 }
 
 func (m *Manager) httpGetState(c *gin.Context) {
-	state := scheduler.Agent.State(m.workers)
+	state := scheduler.Agent.State(scheduler.Agent{}, m.workers)
 	c.JSON(200, state)
+}
+
+func (m *Manager) httpSchedule(c *gin.Context) {
+	type ScheduleRequest struct {
+		MachineID string  `json:"target"`
+		Job       job.Job `json:"job"`
+	}
+	body := ScheduleRequest{}
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(400, "Failed to parse container")
+	}
+	target, job := body.MachineID, body.Job
+	m.workers[target].StartJob(job.Image, job.Cmd, job.Duration)
+	c.JSON(200, nil)
 }
 
 func (m *Manager) Start() error {
@@ -337,9 +354,11 @@ func (m *Manager) Start() error {
 	}
 
 	for _, w := range m.workers {
-		if err := w.StopMeter(); err != nil {
-			log.Println("Worker meter failure", w.Name)
-			return err
+		if w.HasPowerMeter {
+			if err := w.StopMeter(); err != nil {
+				log.Println("Worker meter failure", w.Name)
+				return err
+			}
 		}
 	}
 
@@ -354,17 +373,27 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 		log.Print(err)
 		return err
 	}
-	stats := profile.DNN_params{}
-	if err := json.Unmarshal(marsh_stats, &stats); err != nil {
-		log.Print(err)
-		return err
-	}
-	stats.MachineID = w.Name
 
-	m.statsLogger.Add(stats)
+	if m.ReducedStats {
+		stats := ReducedStatsParams{}
+		if err := json.Unmarshal(marsh_stats, &stats); err != nil {
+			log.Print(err)
+			return err
+		}
+		stats.MachineID = w.Name
+		m.statsLogger.Add(stats)
+	} else {
+		stats := profile.DNN_params{}
+		if err := json.Unmarshal(marsh_stats, &stats); err != nil {
+			log.Print(err)
+			return err
+		}
+		stats.MachineID = w.Name
+		m.statsLogger.Add(stats)
+	}
 
 	// container logging
-	time := stats.Timestamp
+	time := stats_["timestamp"].(string)
 	for key := range w.RunningJobStats {
 		baseStats := w.RunningJobStats[key].(map[string]interface{})
 		memStats := baseStats["memory_stats"].(map[string]interface{})
