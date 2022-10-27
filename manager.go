@@ -44,7 +44,7 @@ type Manager struct {
 	currentNumJobsRunning int
 	running               bool
 	experimentDone        bool
-	JobQueue              job.SharedJobsArray
+	JobQueue              *job.SharedJobsArray
 	APIPort               string
 	APIEngine             *gin.Engine
 	RPCPort               string
@@ -120,7 +120,7 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.initScheduler(config)
 	m.initAPI(config)
 
-	m.JobQueue = job.SharedJobsArray{}
+	m.JobQueue = &job.SharedJobsArray{}
 
 	m.workers = make(map[string]*worker.ManagerWorker)
 	for _, w := range config.Workers {
@@ -181,8 +181,10 @@ func (m *Manager) initPredictor(config ManagerConfig) error {
 func (m *Manager) initScheduler(config ManagerConfig) error {
 	if config.SchedulerType == "FIFO" {
 		m.scheduler = &scheduler.FIFO{}
+		log.Print("initialized scheduler: FIFO")
 	} else if config.SchedulerType == "Agent" {
 		m.scheduler = &scheduler.Agent{}
+		log.Print("initialized scheduler: Agent")
 	} else {
 		return errors.New("no scheduler defined")
 	}
@@ -283,10 +285,9 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 
 	// Assign Job(s)
 	if m.JobQueue.Length() > 0 {
-		// log.Println("Scheduling")
 		go func() {
 			t0 := time.Now()
-			if err := m.scheduler.Schedule(m.workers, &m.JobQueue); err != nil {
+			if err := m.scheduler.Schedule(m.workers, m.JobQueue); err != nil {
 				log.Print(err)
 			}
 			tSchedule := time.Since(t0)
@@ -331,7 +332,9 @@ func (m *Manager) httpSchedule(c *gin.Context) {
 		c.JSON(400, "Failed to parse container")
 	}
 	target, job := body.MachineID, body.Job
-	m.workers[target].StartJob(job.Image, job.Cmd, job.Duration)
+	if err := m.workers[target].StartJob(job.Image, job.Cmd, job.Duration); err != nil {
+		c.JSON(500, err)
+	}
 	c.JSON(200, nil)
 }
 
