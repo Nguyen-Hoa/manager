@@ -204,8 +204,13 @@ func (m *Manager) initScheduler(config ManagerConfig) error {
 		m.scheduler = &scheduler.Agent{}
 		log.Print("initialized scheduler: Round Robin")
 	} else if config.SchedulerType == "RoundRobin" {
-		m.scheduler = &scheduler.RoundRobin.New(m.workers)
-		log.Print("initialized scheduler: Agent")
+		if scheduler, err := scheduler.NewRoundRobin(m.workers); err != nil {
+			log.Print(err)
+			return err
+		} else {
+			m.scheduler = scheduler
+		}
+		log.Print("initialized scheduler: RoundRobin")
 	} else {
 		return errors.New("no scheduler defined")
 	}
