@@ -2,26 +2,26 @@ module github.com/Nguyen-Hoa/manager
 
 go 1.19
 
-replace github.com/Nguyen-Hoa/worker => ../worker
+// replace github.com/Nguyen-Hoa/worker => ../worker
 
 replace github.com/Nguyen-Hoa/scheduler => ../scheduler
 
 replace github.com/Nguyen-Hoa/predictor => ../predictor
 
 require (
-	github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3
+	github.com/Nguyen-Hoa/csvlogger v0.0.0-20221028172252-e2cd60b68c98
 	github.com/Nguyen-Hoa/job v0.1.0
 	github.com/Nguyen-Hoa/predictor v0.0.0-20221010231521-ac8d325da0ab
 	github.com/Nguyen-Hoa/profile v1.2.7
 	github.com/Nguyen-Hoa/scheduler v0.1.1
-	github.com/Nguyen-Hoa/worker v1.7.2
+	github.com/Nguyen-Hoa/worker v1.7.8
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
 	github.com/gin-gonic/gin v1.8.1
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/Nguyen-Hoa/wattsup v1.4.1 // indirect
+	github.com/Nguyen-Hoa/wattsup v1.5.0 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.21+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect

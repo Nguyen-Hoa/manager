@@ -3,6 +3,7 @@ package manager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -43,7 +44,7 @@ type Manager struct {
 	currentTimeStep       int
 	currentNumJobsRunning int
 	running               bool
-	experimentDone        bool
+	ExperimentDone        bool
 	JobQueue              *job.SharedJobsArray
 	APIPort               string
 	APIEngine             *gin.Engine
@@ -71,6 +72,8 @@ type ManagerConfig struct {
 	RPCPort                string                `json:"rpcPort"`
 	BaseLogPath            string                `json:"baseLogPath"`
 	ReducedStats           bool                  `json:"reducedStats"`
+	ExperimentPath         string                `json:"experimentPath"`
+	Jobs                   []job.Job             `json:"jobs"`
 }
 
 type Latency struct {
@@ -96,7 +99,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 	m.stepSize = time.Duration(config.StepSize) * time.Second
 	m.HasPredictor = false
 
-	m.baseLogPath = filepath.Join(config.BaseLogPath, time.Now().Format("2006_01_02-15:04:05"))
+	if config.ExperimentPath != "" {
+		m.baseLogPath = filepath.Join(config.BaseLogPath, config.ExperimentPath)
+	} else {
+		m.baseLogPath = filepath.Join(config.BaseLogPath, time.Now().Format("2006_01_02-15:04:05"))
+	}
 	if err := os.MkdirAll(m.baseLogPath, os.ModePerm); err != nil {
 		return err
 	}
@@ -116,11 +123,10 @@ func (m *Manager) Init(config ManagerConfig) error {
 	}
 	m.containerLogger = containerLogger
 
-	m.initPredictor(config)
-	m.initScheduler(config)
-	m.initAPI(config)
-
 	m.JobQueue = &job.SharedJobsArray{}
+	for _, j := range config.Jobs {
+		m.JobQueue.Append(j)
+	}
 
 	m.workers = make(map[string]*worker.ManagerWorker)
 	for _, w := range config.Workers {
@@ -133,17 +139,29 @@ func (m *Manager) Init(config ManagerConfig) error {
 		log.Println("Initialized", w.Name, " with power meter: ", _worker.HasPowerMeter)
 	}
 
+	m.initPredictor(config)
+	m.initScheduler(config)
+	m.initAPI(config)
+
 	m.startTime = ""
 	m.currentTimeStep = 0
 	m.currentNumJobsRunning = 0
-	m.running = true
-	m.experimentDone = false
+	m.running = false
+	m.ExperimentDone = false
 	m.ReducedStats = config.ReducedStats
 
+	summary, err := json.Marshal(config)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = os.WriteFile(m.baseLogPath+"/summary.out", summary, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }
 
-func parseConfig(configPath string) ManagerConfig {
+func ParseConfig(configPath string) ManagerConfig {
 	jsonFile, err := os.Open(configPath)
 	if err != nil {
 		log.Fatal("Failed to parse configuration file.")
@@ -184,6 +202,9 @@ func (m *Manager) initScheduler(config ManagerConfig) error {
 		log.Print("initialized scheduler: FIFO")
 	} else if config.SchedulerType == "Agent" {
 		m.scheduler = &scheduler.Agent{}
+		log.Print("initialized scheduler: Round Robin")
+	} else if config.SchedulerType == "RoundRobin" {
+		m.scheduler = &scheduler.RoundRobin.New(m.workers)
 		log.Print("initialized scheduler: Agent")
 	} else {
 		return errors.New("no scheduler defined")
@@ -227,8 +248,19 @@ func (m *Manager) initAPI(config ManagerConfig) error {
 
 func NewManager(configPath string) (Manager, error) {
 	m := Manager{}
-	config := parseConfig(configPath)
+	config := ParseConfig(configPath)
 
+	if err := m.Init(config); err != nil {
+		log.Println("Failed to initialize manager!")
+		log.Fatal(err)
+		return m, err
+	}
+	log.Println("Initialized manager")
+	return m, nil
+}
+
+func NewManagerWithConfig(config ManagerConfig) (Manager, error) {
+	m := Manager{}
 	if err := m.Init(config); err != nil {
 		log.Println("Failed to initialize manager!")
 		log.Fatal(err)
@@ -257,12 +289,15 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 				w.LatestCPU = float32(stats["cpupercent"].(float64))
 				m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
 				m.logStats(w)
-				jobsRunning += w.RunningJobs.Length()
+				jobsRunning += len(w.RunningJobStats)
 			}
 		}(w)
 	}
 	pollWaitGroup.Wait()
 	m.currentNumJobsRunning = jobsRunning
+	if m.currentNumJobsRunning > 0 {
+		m.running = true
+	}
 
 	// Inference
 	if m.HasPredictor {
@@ -313,7 +348,7 @@ func (m *Manager) httpReceiveJob(c *gin.Context) {
 }
 
 func (m *Manager) httpExperimentDone(c *gin.Context) {
-	m.experimentDone = true
+	m.ExperimentDone = true
 	c.JSON(200, "")
 }
 
@@ -339,9 +374,9 @@ func (m *Manager) httpSchedule(c *gin.Context) {
 }
 
 func (m *Manager) Start() error {
-	m.startTime = time.Now().Format("YYYY-MM-DD_HH:MM")
+	tExp := time.Now()
+	m.startTime = tExp.Format("YYYY-MM-DD_HH:MM")
 	go manners.ListenAndServe("localhost:"+m.APIPort, m.APIEngine)
-
 	// main loop
 	for {
 		done := make(chan bool, 1)
@@ -358,14 +393,27 @@ func (m *Manager) Start() error {
 
 	for _, w := range m.workers {
 		if w.HasPowerMeter {
-			if err := w.StopMeter(); err != nil {
+			if path, err := w.StopMeter(); err != nil {
 				log.Println("Worker meter failure", w.Name)
 				return err
+			} else {
+				src := fmt.Sprintf("\n%s:~/jerry/server/%s\n", w.Address[7:len(w.Address)-5], path)
+				f, err := os.OpenFile(m.baseLogPath+"/summary.out",
+					os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					log.Println(err)
+				}
+				defer f.Close()
+				if _, err := f.WriteString(src); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
 
 	manners.Close()
+	stopTime := time.Since(tExp)
+	log.Print(stopTime)
 	return nil
 }
 
@@ -472,7 +520,9 @@ func (m *Manager) state() {
 func (m *Manager) stopCondition() bool {
 	if m.currentTimeStep >= m.maxTimeStep {
 		return true
-	} else if m.experimentDone && m.currentNumJobsRunning == 0 {
+	}
+
+	if m.running && m.currentNumJobsRunning == 0 {
 		return true
 	}
 	return false

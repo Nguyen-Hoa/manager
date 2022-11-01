@@ -3,6 +3,8 @@ github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2y
 github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2BO69KH/soAE=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3 h1:eDraL8yqphvN/+hlUgSYX2sJuEp4n3+Rru3udI5tI0Y=
 github.com/Nguyen-Hoa/csvlogger v0.0.0-20220922224235-a15bfd496fe3/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
+github.com/Nguyen-Hoa/csvlogger v0.0.0-20221028172252-e2cd60b68c98 h1:XuYtCTYVTSyVDlTXOwM2FqJKfh4uS9nfjlc1PFjDsV4=
+github.com/Nguyen-Hoa/csvlogger v0.0.0-20221028172252-e2cd60b68c98/go.mod h1:SS0tErnfKHXCcBf8Ur6q4yCaJ1x83gixmUJJhoQOtD8=
 github.com/Nguyen-Hoa/job v0.1.0 h1:bw5jzM3Oa9RvI7ACEvSJLyOj1knLtPOieamTxkpmzOM=
 github.com/Nguyen-Hoa/job v0.1.0/go.mod h1:/PEf7Uln3SqFlelfdy5+4Rez6Y2KZc31YFsx/zYzGUI=
 github.com/Nguyen-Hoa/profile v1.2.5 h1:nBFsZ+SpTIh0YF2c1hmLqKU9SG7qR9KsQ9pNOWOD+RQ=
@@ -11,12 +13,16 @@ github.com/Nguyen-Hoa/profile v1.2.7 h1:n/QoyrYS343AEWdRoO0ZZdYr5zxjNqr/xO9JXwuL
 github.com/Nguyen-Hoa/profile v1.2.7/go.mod h1:VVdNlhWM+Purjxi87hCCQnedjOBBE7dqvlKU32Tgydg=
 github.com/Nguyen-Hoa/wattsup v1.4.1 h1:aiId0st4WGkVkHbeYYjUQYaIJfmyNNX7dtQmc2un9FU=
 github.com/Nguyen-Hoa/wattsup v1.4.1/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
+github.com/Nguyen-Hoa/wattsup v1.5.0 h1:2cVoFn3YqMpHDomVrG59xOdJT1DvMd1ml0o+8EI74Fo=
+github.com/Nguyen-Hoa/wattsup v1.5.0/go.mod h1:J7uo51q7RcgqJe/Xk8YHiytVkY0jlFgoxtvYAlzxiEo=
 github.com/Nguyen-Hoa/worker v1.6.0 h1:SjE3J88Y0TN8xhwLRG5F4JYcKYDy0SFXVNfkW+3gf8E=
 github.com/Nguyen-Hoa/worker v1.6.0/go.mod h1:f02WdmIuSSIdMEs6blkTRHYjzy1JTWJM2k2kUmASfNM=
 github.com/Nguyen-Hoa/worker v1.7.1 h1:WXGj1My4SssxFMSLcLSX/Ew73QECpBgSnjBlt6SHXdg=
 github.com/Nguyen-Hoa/worker v1.7.1/go.mod h1:u+7yc/3hrAXpxaFx41yDr5jnb1zXAicCOopHpc/t7yk=
 github.com/Nguyen-Hoa/worker v1.7.2 h1:G8eSohUr3EqxMbqo83oZaF2nwc43Z3QV/1No/0A5aBM=
 github.com/Nguyen-Hoa/worker v1.7.2/go.mod h1:u+7yc/3hrAXpxaFx41yDr5jnb1zXAicCOopHpc/t7yk=
+github.com/Nguyen-Hoa/worker v1.7.8 h1:w4NUpmJWf4gk7vaHbOi/FtHCO2fJedeg1Nc1QWHjPXQ=
+github.com/Nguyen-Hoa/worker v1.7.8/go.mod h1:u/5+2+1RAOWOH2Rh0WaC0fs4C+PRxNuryPLf9AOQFKQ=
 github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd h1:ePesaBzdTmoMQjwqRCLP2jY+jjWMBpwws/LEQdt1fMM=
 github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd/go.mod h1:TNehV1AhBwtT7Bd+rh8G6MoGDbBLNs/sKdk3nvr4Yzg=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
