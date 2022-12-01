@@ -54,6 +54,7 @@ type Manager struct {
 	baseLogPath     string
 	statsLogger     logger.Logger
 	latencyLogger   logger.Logger
+	inferenceLogger logger.Logger
 	containerLogger logger.Logger
 }
 
@@ -67,6 +68,7 @@ type ManagerConfig struct {
 	ModelPath              string                `json:"modelPath"`
 	InferenceServerAddress string                `json:"inferenceServerAddress"`
 	SchedulerType          string                `json:"schedulerType"`
+	SchedulerMetric        string                `json:"schedulerMetric"`
 	Workers                []worker.WorkerConfig `json:"workers"`
 	APIPort                string                `json:"apiPort"`
 	RPCPort                string                `json:"rpcPort"`
@@ -80,6 +82,12 @@ type Latency struct {
 	MachineID string
 	Type      string
 	Latency   time.Duration
+}
+
+type Prediction struct {
+	Timestamp string
+	MachineID string
+	Pred      float32
 }
 
 type ReducedStatsParams struct {
@@ -122,6 +130,11 @@ func (m *Manager) Init(config ManagerConfig) error {
 		return err
 	}
 	m.containerLogger = containerLogger
+	inferenceLogger, err := logger.NewLogger(m.baseLogPath, "inference")
+	if err != nil {
+		return err
+	}
+	m.inferenceLogger = inferenceLogger
 
 	m.JobQueue = &job.SharedJobsArray{}
 	for _, j := range config.Jobs {
@@ -198,19 +211,32 @@ func (m *Manager) initPredictor(config ManagerConfig) error {
 
 func (m *Manager) initScheduler(config ManagerConfig) error {
 	if config.SchedulerType == "FIFO" {
-		m.scheduler = &scheduler.FIFO{}
+		if scheduler, err := scheduler.NewFIFO(m.workers, m.JobQueue); err != nil {
+			log.Print(err)
+			return err
+		} else {
+			m.scheduler = scheduler
+		}
 		log.Print("initialized scheduler: FIFO")
 	} else if config.SchedulerType == "Agent" {
 		m.scheduler = &scheduler.Agent{}
 		log.Print("initialized scheduler: Round Robin")
 	} else if config.SchedulerType == "RoundRobin" {
-		if scheduler, err := scheduler.NewRoundRobin(m.workers); err != nil {
+		if scheduler, err := scheduler.NewRoundRobin(m.workers, config.SchedulerMetric); err != nil {
 			log.Print(err)
 			return err
 		} else {
 			m.scheduler = scheduler
 		}
 		log.Print("initialized scheduler: RoundRobin")
+	} else if config.SchedulerType == "Packing" {
+		if scheduler, err := scheduler.NewPack(m.workers, m.JobQueue, config.SchedulerMetric); err != nil {
+			log.Print(err)
+			return err
+		} else {
+			m.scheduler = scheduler
+		}
+		log.Print("initialized scheduler: Packing")
 	} else {
 		return errors.New("no scheduler defined")
 	}
@@ -291,7 +317,11 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 			if err != nil {
 				log.Printf("Error updating stats for %s", w.Name)
 			} else {
-				w.LatestCPU = float32(stats["cpupercent"].(float64))
+				color := "\033[32m"
+				if !w.Available {
+					color = "\033[31m"
+				}
+				log.Printf("%s%s\033[0m:: vmem:%f, cpu:%f", color, w.Name, stats["vmem"], stats["cpupercent"])
 				m.latencyLogger.Add(Latency{w.Name, "poll", tPoll})
 				m.logStats(w)
 				jobsRunning += len(w.RunningJobStats)
@@ -310,11 +340,10 @@ func step(done chan bool, t0 time.Time, m *Manager) error {
 		for _, w := range m.workers {
 			t0 := time.Now()
 			prediction, err := m.predictor.Predict(w)
-			if prediction != 0 {
-				w.LatestPredictedPower = prediction
-				log.Print(prediction)
-			}
 			tInference := time.Since(t0)
+			if prediction != 0 {
+				log.Printf("%s: %f", w.Name, prediction)
+			}
 			m.latencyLogger.Add(Latency{w.Name, "inference", tInference})
 			if err != nil {
 				log.Print(err)
@@ -395,7 +424,10 @@ func (m *Manager) Start() error {
 			m.currentTimeStep += 1
 		}
 	}
+	stopTime := time.Since(tExp)
+	log.Print(stopTime)
 
+	WriteToFile(m.baseLogPath+"/summary.out", "\n"+stopTime.String()+"\n")
 	for _, w := range m.workers {
 		if w.HasPowerMeter {
 			if path, err := w.StopMeter(); err != nil {
@@ -417,8 +449,6 @@ func (m *Manager) Start() error {
 	}
 
 	manners.Close()
-	stopTime := time.Since(tExp)
-	log.Print(stopTime)
 	return nil
 }
 
@@ -447,30 +477,35 @@ func (m *Manager) logStats(w *worker.ManagerWorker) error {
 		stats.MachineID = w.Name
 		m.statsLogger.Add(stats)
 	}
+	time := stats_["timestamp"].(string)
+
+	// inference logging
+	m.inferenceLogger.Add(Prediction{time, w.Name, w.LatestPredictedPower})
 
 	// container logging
-	time := stats_["timestamp"].(string)
 	for key := range w.RunningJobStats {
 		baseStats := w.RunningJobStats[key].(map[string]interface{})
-		memStats := baseStats["memory_stats"].(map[string]interface{})
-		cpuStats := baseStats["cpu_stats"].(map[string]interface{})
-		cpuUsageStats := cpuStats["cpu_usage"].(map[string]interface{})
-		memusage := memStats["usage"]
-		cpuusage := cpuUsageStats["total_usage"]
-		if memusage != nil && cpuusage != nil {
-			type ContainerStats struct {
-				MachineID string
-				Timestamp string
-				MemUsage  float64
-				CpuUsage  float64
+		if baseStats != nil && baseStats["memory_stats"] != nil && baseStats["cpu_stats"] != nil {
+			memStats := baseStats["memory_stats"].(map[string]interface{})
+			cpuStats := baseStats["cpu_stats"].(map[string]interface{})
+			cpuUsageStats := cpuStats["cpu_usage"].(map[string]interface{})
+			memusage := memStats["usage"]
+			cpuusage := cpuUsageStats["total_usage"]
+			if memusage != nil && cpuusage != nil {
+				type ContainerStats struct {
+					MachineID string
+					Timestamp string
+					MemUsage  float64
+					CpuUsage  float64
+				}
+				ctrStats := ContainerStats{
+					w.Name,
+					time,
+					memStats["usage"].(float64),
+					cpuUsageStats["total_usage"].(float64),
+				}
+				m.containerLogger.Add(ctrStats)
 			}
-			ctrStats := ContainerStats{
-				w.Name,
-				time,
-				memStats["usage"].(float64),
-				cpuUsageStats["total_usage"].(float64),
-			}
-			m.containerLogger.Add(ctrStats)
 		}
 	}
 
@@ -527,8 +562,21 @@ func (m *Manager) stopCondition() bool {
 		return true
 	}
 
+	log.Printf("running jobs: %d", m.currentNumJobsRunning)
 	if m.running && m.currentNumJobsRunning == 0 {
 		return true
 	}
 	return false
+}
+
+func WriteToFile(path, data string) error {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(data); err != nil {
+		log.Println(err)
+	}
+	return nil
 }

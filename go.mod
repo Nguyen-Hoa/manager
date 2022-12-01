@@ -10,11 +10,11 @@ replace github.com/Nguyen-Hoa/predictor => ../predictor
 
 require (
 	github.com/Nguyen-Hoa/csvlogger v0.0.0-20221028172252-e2cd60b68c98
-	github.com/Nguyen-Hoa/job v0.1.0
+	github.com/Nguyen-Hoa/job v0.2.0
 	github.com/Nguyen-Hoa/predictor v0.0.0-20221010231521-ac8d325da0ab
 	github.com/Nguyen-Hoa/profile v1.2.7
 	github.com/Nguyen-Hoa/scheduler v0.1.1
-	github.com/Nguyen-Hoa/worker v1.7.8
+	github.com/Nguyen-Hoa/worker v1.8.0
 	github.com/braintree/manners v0.0.0-20160418043613-82a8879fc5fd
 	github.com/gin-gonic/gin v1.8.1
 )
@@ -46,7 +46,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/shirou/gopsutil/v3 v3.22.9 // indirect
+	github.com/shirou/gopsutil/v3 v3.22.10 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.5.0 // indirect
